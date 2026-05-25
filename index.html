@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stem-lab - Smart Lab Management System</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- App CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Blur Decorative Gradients -->
+    <div class="glow-bg-1"></div>
+    <div class="glow-bg-2"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-flask-vial"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>STEM Lab</h1>
+                    <p>Smart Lab Management System</p>
+                </div>
+            </div>
+
+            <!-- Role Switcher Widget -->
+            <div class="role-switcher-widget">
+                <span class="role-label"><i class="fa-solid fa-user-shield"></i> Vai trò:</span>
+                <select id="role-select" class="role-select">
+                    <option value="student" selected>🎓 Học sinh</option>
+                    <option value="assistant">⚡ Lab Assistant</option>
+                    <option value="teacher">👨‍🏫 Giáo viên</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="app-main">
+            <!-- 1. STUDENT VIEW -->
+            <section id="student-view" class="view-section active">
+                <!-- Section Header -->
+                <div class="section-header">
+                    <h2><i class="fa-regular fa-calendar-days"></i> Lịch Thời Gian Thực (Real-time Calendar)</h2>
+                    <p>Quét mã QR tại cửa phòng Lab hoặc nhấp trực tiếp vào ô lịch trống để đăng ký sử dụng.</p>
+                </div>
+                
+                <!-- Calendar Filter / Actions -->
+                <div class="calendar-actions">
+                    <div class="date-selector">
+                        <button class="btn-icon" id="prev-day"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span id="current-date-display">Thứ Ba, 26/05/2026</span>
+                        <button class="btn-icon" id="next-day"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <button class="btn btn-primary" id="btn-qr-simulate">
+                        <i class="fa-solid fa-qrcode"></i> Quét QR Đặt lịch (Simulate)
+                    </button>
+                </div>
+
+                <!-- Live Grid Schedule -->
+                <div class="calendar-wrapper">
+                    <div class="calendar-grid" id="calendar-grid">
+                        <!-- Rendered dynamically by js/ui.js -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. LAB ASSISTANT VIEW -->
+            <section id="assistant-view" class="view-section">
+                <!-- UI for Lab Assistant -->
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-list-check"></i> Phê Duyệt & Bàn Giao Phòng Lab</h2>
+                    <p>Quản lý các yêu cầu đăng ký phòng STEM từ các nhóm và điều phối thiết bị.</p>
+                </div>
+                <div id="la-dashboard-content">
+                    <!-- Rendered dynamically by js/ui.js -->
+                </div>
+            </section>
+
+            <!-- 3. TEACHER VIEW -->
+            <section id="teacher-view" class="view-section">
+                <!-- UI for Teacher -->
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-chart-line"></i> Dashboard Báo Cáo & Thống Kê</h2>
+                    <p>Giám sát hoạt động và đo lường tần suất sử dụng các Zone trong phòng STEM.</p>
+                </div>
+                <div id="teacher-dashboard-content">
+                    <!-- Rendered dynamically by js/ui.js -->
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>&copy; 2026 STEM Lab System. Developed by Antigravity AWF.</p>
+        </footer>
+    </div>
+
+    <!-- MODAL: Booking Form -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-plus"></i> Đăng ký sử dụng phòng STEM</h3>
+                <span class="close-modal" id="close-booking-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="booking-form">
+                    <input type="hidden" id="form-zone">
+                    <input type="hidden" id="form-timeslot">
+                    <input type="hidden" id="form-date">
+                    
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label>Khu vực (Zone)</label>
+                            <div class="info-badge" id="display-zone">Green Zone</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Khung giờ (Ca học)</label>
+                            <div class="info-badge" id="display-timeslot">07:00 - 09:00</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-team">Tên Nhóm / Dự án <span class="required">*</span></label>
+                        <input type="text" id="input-team" placeholder="VD: VEX Team 12A1, Drone Club..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-representative">Học sinh đại diện <span class="required">*</span></label>
+                        <input type="text" id="input-representative" placeholder="Nhập họ và tên đại diện" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Thiết bị mượn kèm</label>
+                        <div class="devices-checklist" id="devices-checklist">
+                            <!-- Populated dynamically based on Zone -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-purpose">Mục đích sử dụng <span class="required">*</span></label>
+                        <textarea id="input-purpose" rows="3" placeholder="Ghi rõ nội dung học tập, thực hành dự án" required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-booking">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Xác nhận đăng ký</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Evaluation Form -->
+    <div id="evaluation-modal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3><i class="fa-regular fa-star"></i> Đánh giá sau sử dụng phòng Lab</h3>
+                <span class="close-modal" id="close-evaluation-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="evaluation-form">
+                    <input type="hidden" id="eval-booking-id">
+                    <p class="eval-intro">Chúc mừng nhóm của bạn đã hoàn thành ca học! Hãy giúp ban quản lý đánh giá chất lượng phòng Lab.</p>
+                    
+                    <div class="form-group text-center">
+                        <label>Mức độ hài lòng (1 - 5 Sao)</label>
+                        <div class="star-rating">
+                            <i class="fa-regular fa-star" data-value="1"></i>
+                            <i class="fa-regular fa-star" data-value="2"></i>
+                            <i class="fa-regular fa-star" data-value="3"></i>
+                            <i class="fa-regular fa-star" data-value="4"></i>
+                            <i class="fa-regular fa-star" data-value="5"></i>
+                        </div>
+                        <input type="hidden" id="input-rating" value="5">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-review">Ý kiến đóng góp / Phản hồi</label>
+                        <textarea id="input-review" rows="3" placeholder="Nhập ý kiến đóng góp của bạn về thiết bị, không gian phòng học..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Files -->
+    <script src="js/storage.js"></script>
+    <script src="js/controller.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

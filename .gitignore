@@ -1,0 +1,6 @@
+# Ignore local brain data
+.brain/
+
+# System files
+.DS_Store
+Thumbs.db
