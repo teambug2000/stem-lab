@@ -29,8 +29,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- HTML5 QR Code Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <!-- App CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -106,14 +104,7 @@
                         <input type="date" id="date-picker" class="date-picker-input">
                         <button class="btn-icon" id="next-day"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-secondary" id="btn-qr-scan-camera">
-                            <i class="fa-solid fa-camera"></i> Quét QR bằng Camera
-                        </button>
-                        <button class="btn btn-primary" id="btn-qr-simulate">
-                            <i class="fa-solid fa-qrcode"></i> Nhập mã QR thủ công
-                        </button>
-                    </div>
+
                 </div>
 
                 <!-- Live Grid Schedule -->
@@ -445,19 +436,7 @@
         </div>
     </div>
 
-    <!-- MODAL: QR Scanner Camera -->
-    <div id="qr-scanner-modal" class="modal">
-        <div class="modal-content glass" style="max-width: 450px;">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-camera"></i> Quét mã QR Zone</h3>
-                <span class="close-modal" id="close-qr-modal">&times;</span>
-            </div>
-            <div class="modal-body text-center">
-                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Hướng camera của bạn vào mã QR dán ở khu vực để tự động chọn Zone.</p>
-                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; background: black; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color);"></div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Application Script Files -->
     <script src="js/storage.js"></script>

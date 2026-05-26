@@ -49,7 +49,6 @@ let activeRole = 'student'; // Roles: student, assistant, teacher
 let activeTeacherTab = 'stats'; // Stats or devices
 let barChart = null;
 let pieChart = null;
-let qrScannerInstance = null; // Camera scanner instance reference
 
 const UIEngine = {
     init() {
@@ -229,13 +228,6 @@ const UIEngine = {
             });
         });
 
-        // QR Camera Scanner click listeners
-        document.getElementById('btn-qr-scan-camera').addEventListener('click', () => this.showQRScannerCamera());
-        document.getElementById('close-qr-modal').addEventListener('click', () => this.hideQRScannerCamera());
-
-        // Simulated QR scan click
-        document.getElementById('btn-qr-simulate').addEventListener('click', () => this.simulateQRScan());
-        
         // Lab Assistant Quick / On-the-spot Booking
         document.getElementById('btn-quick-booking').addEventListener('click', () => {
             this.showQuickBookingModal();
@@ -1170,125 +1162,7 @@ const UIEngine = {
         });
     },
 
-    // --- 9. SIMULATED QR CODE SCANNER ---
-    simulateQRScan() {
-        const zonesKeys = Object.keys(ZONES).filter(k => ZONES[k].bookable); // Only bookable zones
-        const zonesStr = zonesKeys.map((k, idx) => `${idx + 1}. ${ZONES[k].name}`).join('\n');
-        
-        const zoneChoice = prompt(`🤖 Giả lập quét mã QR tại cửa phòng Lab!\n\nChọn khu vực (Zone) cần đặt (1-3):\n${zonesStr}`, '1');
-        if (!zoneChoice) return;
 
-        const zoneIdx = parseInt(zoneChoice) - 1;
-        if (zoneIdx < 0 || zoneIdx >= zonesKeys.length) {
-            alert('Lựa chọn không hợp lệ!');
-            return;
-        }
-
-        const slotsStr = TIME_SLOTS.map((s, idx) => `${idx + 1}. Ca ${s}`).join('\n');
-        const slotChoice = prompt(`Chọn ca học cần đặt (1-5):\n${slotsStr}`, '1');
-        if (!slotChoice) return;
-
-        const slotIdx = parseInt(slotChoice) - 1;
-        if (slotIdx < 0 || slotIdx >= TIME_SLOTS.length) {
-            alert('Lựa chọn không hợp lệ!');
-            return;
-        }
-
-        const slotNumChoice = prompt(`Chọn vị trí đặt Slot (1, 2, hoặc 3):`, '1');
-        if (!slotNumChoice) return;
-
-        const slotNum = parseInt(slotNumChoice);
-        if (slotNum !== 1 && slotNum !== 2 && slotNum !== 3) {
-            alert('Vị trí Slot chỉ từ 1 đến 3!');
-            return;
-        }
-
-        const selectedZone = zonesKeys[zoneIdx];
-        const selectedSlot = TIME_SLOTS[slotIdx];
-
-        this.showBookingModal(selectedZone, selectedSlot, slotNum);
-    },
-
-    // --- 10. REAL CAMERA QR CODE SCANNER (html5-qrcode) ---
-    showQRScannerCamera() {
-        document.getElementById('qr-scanner-modal').classList.add('active');
-        
-        // Khởi tạo camera
-        qrScannerInstance = new Html5Qrcode("qr-reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-        
-        const qrSuccessCallback = (decodedText) => {
-            console.log(`Scan success: ${decodedText}`);
-            this.hideQRScannerCamera();
-            this.handleScannedQR(decodedText);
-        };
-        
-        qrScannerInstance.start({ facingMode: "environment" }, config, qrSuccessCallback)
-            .catch(err => {
-                alert("Không thể khởi chạy camera. Hãy kiểm tra quyền truy cập camera của trình duyệt!\nChi tiết: " + err);
-                this.hideQRScannerCamera();
-            });
-    },
-
-    hideQRScannerCamera() {
-        document.getElementById('qr-scanner-modal').classList.remove('active');
-        if (qrScannerInstance) {
-            qrScannerInstance.stop().then(() => {
-                qrScannerInstance = null;
-            }).catch(err => {
-                console.error("Lỗi khi dừng camera:", err);
-                qrScannerInstance = null;
-            });
-        }
-    },
-
-    handleScannedQR(text) {
-        let zone = null;
-        try {
-            // Thử phân tích URL
-            const url = new URL(text.startsWith('http') ? text : 'https://fake-stem-lab.com/' + text);
-            zone = url.searchParams.get('zone');
-        } catch(e) {
-            if (text.includes('zone=')) {
-                zone = text.split('zone=')[1].split('&')[0];
-            }
-        }
-        
-        if (zone && ZONES[zone] && ZONES[zone].bookable) {
-            // Đặt ngày hiện tại thành ngày hôm nay
-            const todayStr = new Date().toISOString().split('T')[0];
-            currentDate = todayStr;
-            
-            // Tìm slot trống của Zone
-            const bookings = StorageEngine.getBookings().filter(b => b.date === currentDate && b.zone === zone && b.status !== 'rejected');
-            let foundSlot = null;
-            let foundSlotNumber = 1;
-            
-            for (const slot of TIME_SLOTS) {
-                for (let i = 1; i <= 3; i++) {
-                    const isBooked = bookings.some(b => b.time_slot === slot && b.slot_number === i);
-                    if (!isBooked) {
-                        foundSlot = slot;
-                        foundSlotNumber = i;
-                        break;
-                    }
-                }
-                if (foundSlot) break;
-            }
-            
-            if (foundSlot) {
-                this.renderAll();
-                this.showBookingModal(zone, foundSlot, foundSlotNumber);
-            } else {
-                alert(`Khu vực ${ZONES[zone].name} hôm nay đã kín lịch!`);
-                this.renderAll();
-            }
-        } else if (zone === 'green') {
-            alert('Khu vực Green Zone không hỗ trợ đăng ký trực tuyến bằng QR Code!');
-        } else {
-            alert(`Mã QR quét được không hợp lệ: "${text}".\nMã QR hợp lệ phải chứa thông tin khu vực (ví dụ: ?zone=yellow).`);
-        }
-    },
 
     async loadDataFromCloudOnStartup() {
         const url = StorageEngine.getApiUrl();
