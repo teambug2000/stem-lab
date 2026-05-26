@@ -59,19 +59,22 @@ const UIEngine = {
         // Check login session
         const session = localStorage.getItem('stem_lab_session');
         if (!session) {
-            // Show login screen
-            document.getElementById('login-overlay').style.display = 'flex';
-            document.getElementById('user-profile-widget').style.display = 'none';
+            // Mặc định học sinh tự do sử dụng không cần đăng nhập
+            activeRole = 'student';
+            document.getElementById('btn-login-trigger').style.display = 'inline-flex';
+            document.getElementById('user-profile-info').style.display = 'none';
+            
+            this.switchRoleView(activeRole);
+            
+            // Dù không đăng nhập vẫn check tham số URL để auto open form đặt phòng qua QR
+            this.checkURLQueryParamsAndOpenForm();
         } else {
             const user = JSON.parse(session);
             activeRole = user.role;
             
-            // Hide login screen
-            document.getElementById('login-overlay').style.display = 'none';
-            
-            // Show profile widget
-            document.getElementById('user-profile-widget').style.display = 'flex';
-            document.getElementById('user-info').innerHTML = `<i class="fa-solid fa-user"></i> ${user.name} (${user.username})`;
+            document.getElementById('btn-login-trigger').style.display = 'none';
+            document.getElementById('user-profile-info').style.display = 'flex';
+            document.getElementById('user-info').innerHTML = `<i class="fa-solid fa-user"></i> ${user.name}`;
             
             // Switch to appropriate view
             this.switchRoleView(activeRole);
@@ -93,6 +96,16 @@ const UIEngine = {
     },
 
     setupEventListeners() {
+        // Mở modal Đăng nhập
+        document.getElementById('btn-login-trigger').addEventListener('click', () => {
+            document.getElementById('login-overlay').style.display = 'flex';
+        });
+
+        // Đóng modal Đăng nhập
+        document.getElementById('close-login-modal').addEventListener('click', () => {
+            document.getElementById('login-overlay').style.display = 'none';
+        });
+
         // Handle login form submit
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -111,8 +124,10 @@ const UIEngine = {
                 activeRole = user.role;
                 document.getElementById('login-form').reset();
                 document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('user-profile-widget').style.display = 'flex';
-                document.getElementById('user-info').innerHTML = `<i class="fa-solid fa-user"></i> ${user.name} (${user.username})`;
+                
+                document.getElementById('btn-login-trigger').style.display = 'none';
+                document.getElementById('user-profile-info').style.display = 'flex';
+                document.getElementById('user-info').innerHTML = `<i class="fa-solid fa-user"></i> ${user.name}`;
                 
                 this.switchRoleView(activeRole);
                 
@@ -128,10 +143,14 @@ const UIEngine = {
 
         // Handle Logout button click
         document.getElementById('btn-logout').addEventListener('click', () => {
-            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống quản trị?')) {
                 localStorage.removeItem('stem_lab_session');
-                document.getElementById('login-overlay').style.display = 'flex';
-                document.getElementById('user-profile-widget').style.display = 'none';
+                activeRole = 'student';
+                
+                document.getElementById('btn-login-trigger').style.display = 'inline-flex';
+                document.getElementById('user-profile-info').style.display = 'none';
+                
+                this.switchRoleView('student');
             }
         });
 

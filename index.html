@@ -35,19 +35,20 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Login Screen Overlay -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="login-card glass">
+    <!-- Login Screen Overlay (Modal) -->
+    <div id="login-overlay" class="login-overlay" style="display: none;">
+        <div class="login-card glass" style="position: relative;">
+            <span class="close-modal" id="close-login-modal" style="position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer;">&times;</span>
             <div class="login-logo">
                 <i class="fa-solid fa-flask-vial"></i>
             </div>
-            <h2>Đăng Nhập STEM Lab</h2>
-            <p>Hệ thống đặt lịch & quản lý phòng STEM số hóa</p>
+            <h2>Đăng Nhập Quản Trị</h2>
+            <p>Dành cho Lab Assistant & Giáo viên</p>
             
             <form id="login-form">
                 <div class="form-group">
                     <label for="login-username">Tên tài khoản</label>
-                    <input type="text" id="login-username" placeholder="Nhập tài khoản (VD: hocsinh, troly, giaovien)" required>
+                    <input type="text" id="login-username" placeholder="Nhập tài khoản (VD: troly, giaovien)" required>
                 </div>
                 <div class="form-group">
                     <label for="login-password">Mật khẩu</label>
@@ -56,7 +57,7 @@
                 <button type="submit" class="btn btn-primary btn-block" style="margin-top: 20px; font-size: 15px; padding: 12px;"><i class="fa-solid fa-key"></i> Đăng Nhập</button>
             </form>
             <div class="login-footer">
-                <p>Tài khoản mẫu: hocsinh / troly / giaovien (Mật khẩu: 123456)</p>
+                <p>Tài khoản quản trị: troly / giaovien (Mật khẩu: 123456)</p>
             </div>
         </div>
     </div>
@@ -78,10 +79,13 @@
                 </div>
             </div>
 
-            <!-- User Profile & Logout Widget -->
-            <div class="user-profile-widget" id="user-profile-widget" style="display: none;">
-                <span class="user-info" id="user-info"><i class="fa-solid fa-user"></i> Đang tải...</span>
-                <button class="btn btn-secondary btn-sm" id="btn-logout" style="margin-left: 10px; padding: 4px 8px; font-size: 11px;"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+            <!-- User Profile & Login/Logout Widget -->
+            <div class="user-profile-widget" id="user-profile-widget">
+                <button class="btn btn-secondary btn-sm" id="btn-login-trigger"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập quản trị</button>
+                <div id="user-profile-info" style="display: none; align-items: center;">
+                    <span class="user-info" id="user-info"><i class="fa-solid fa-user"></i> Đang tải...</span>
+                    <button class="btn btn-secondary btn-sm" id="btn-logout" style="margin-left: 10px; padding: 4px 8px; font-size: 11px;"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+                </div>
             </div>
         </header>
 
