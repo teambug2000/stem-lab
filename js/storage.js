@@ -170,6 +170,9 @@ const MOCK_BOOKINGS = [
 ];
 
 const StorageEngine = {
+    _bookingsCache: null,
+    _devicesCache: null,
+
     init() {
         try {
             // Check if Bookings exists, if not, write mock data
@@ -180,16 +183,22 @@ const StorageEngine = {
             if (!localStorage.getItem(STORAGE_KEYS.DEVICES)) {
                 localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(generateDefaultDevices()));
             }
-            console.log('⚡ StorageEngine initialized successfully with 61 devices!');
+            // Clear cache to ensure sync
+            this._bookingsCache = null;
+            this._devicesCache = null;
         } catch (e) {
             console.error('❌ Error initializing StorageEngine:', e);
         }
     },
 
     getBookings() {
+        if (this._bookingsCache !== null) {
+            return this._bookingsCache;
+        }
         try {
             const data = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
-            return data ? JSON.parse(data) : [];
+            this._bookingsCache = data ? JSON.parse(data) : [];
+            return this._bookingsCache;
         } catch (e) {
             console.error('❌ Error getting bookings:', e);
             return [];
@@ -199,6 +208,7 @@ const StorageEngine = {
     saveBookings(bookings) {
         try {
             localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
+            this._bookingsCache = bookings;
             return true;
         } catch (e) {
             console.error('❌ Error saving bookings:', e);
@@ -207,9 +217,13 @@ const StorageEngine = {
     },
 
     getDevices() {
+        if (this._devicesCache !== null) {
+            return this._devicesCache;
+        }
         try {
             const data = localStorage.getItem(STORAGE_KEYS.DEVICES);
-            return data ? JSON.parse(data) : [];
+            this._devicesCache = data ? JSON.parse(data) : [];
+            return this._devicesCache;
         } catch (e) {
             console.error('❌ Error getting devices:', e);
             return [];
@@ -219,6 +233,7 @@ const StorageEngine = {
     saveDevices(devices) {
         try {
             localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(devices));
+            this._devicesCache = devices;
             return true;
         } catch (e) {
             console.error('❌ Error saving devices:', e);
@@ -230,6 +245,8 @@ const StorageEngine = {
         try {
             localStorage.removeItem(STORAGE_KEYS.BOOKINGS);
             localStorage.removeItem(STORAGE_KEYS.DEVICES);
+            this._bookingsCache = null;
+            this._devicesCache = null;
             this.init();
             return true;
         } catch (e) {

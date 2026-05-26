@@ -2,6 +2,18 @@
  * 🖥️ UI ENGINE: stem-lab DOM Render & Interaction Manager
  */
 
+// Helper to escape HTML characters for XSS prevention
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    if (typeof str !== 'string') str = String(str);
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Time slots & Zones configurations (Excluding Green Zone from online reservation selection)
 const TIME_SLOTS = [
     '07:00-09:00',
@@ -243,8 +255,8 @@ const UIEngine = {
                             if (b) {
                                 subSlotDiv.className = `sub-slot booked status-${b.status}`;
                                 subSlotDiv.innerHTML = `
-                                    <div class="sub-slot-team">${b.team_name}</div>
-                                    <div class="sub-slot-meta"><i class="fa-regular fa-user"></i> ${b.representative}</div>
+                                    <div class="sub-slot-team">${escapeHTML(b.team_name)}</div>
+                                    <div class="sub-slot-meta"><i class="fa-regular fa-user"></i> ${escapeHTML(b.representative)}</div>
                                     <span class="sub-slot-badge">Slot ${i}</span>
                                 `;
                                 subSlotDiv.addEventListener('click', () => this.handleBookingCellClick(b));
@@ -279,8 +291,8 @@ const UIEngine = {
                         let displayError = b.error_report ? ' ⚠️' : '';
 
                         subSlotDiv.innerHTML = `
-                            <div class="sub-slot-team">${displayUrgent}${b.team_name}${displayOvertime}${displayError}</div>
-                            <div class="sub-slot-meta"><i class="fa-regular fa-user"></i> ${b.representative}</div>
+                            <div class="sub-slot-team">${displayUrgent}${escapeHTML(b.team_name)}${displayOvertime}${displayError}</div>
+                            <div class="sub-slot-meta"><i class="fa-regular fa-user"></i> ${escapeHTML(b.representative)}</div>
                             <span class="sub-slot-badge">Slot ${i}</span>
                         `;
                         subSlotDiv.addEventListener('click', () => this.handleBookingCellClick(b));
@@ -638,9 +650,9 @@ const UIEngine = {
                     }
 
                     // Display details
-                    let urgentBadge = b.is_urgent ? `<span class="badge-urgent"><i class="fa-solid fa-fire"></i> GẤP: ${b.urgent_reason}</span>` : '';
+                    let urgentBadge = b.is_urgent ? `<span class="badge-urgent"><i class="fa-solid fa-fire"></i> GẤP: ${escapeHTML(b.urgent_reason)}</span>` : '';
                     let overtimeBadge = b.is_overtime ? `<span class="badge-overtime"><i class="fa-solid fa-hourglass-half"></i> ĐANG GIA HẠN (OVERTIME)</span>` : '';
-                    let errorBadge = b.error_report ? `<span class="badge-error"><i class="fa-solid fa-triangle-exclamation"></i> LỖI: ${b.error_report.description}</span>` : '';
+                    let errorBadge = b.error_report ? `<span class="badge-error"><i class="fa-solid fa-triangle-exclamation"></i> LỖI: ${escapeHTML(b.error_report.description)}</span>` : '';
                     
                     let roleBadge = b.role_creator === 'teacher' ? '<span class="info-badge" style="color:var(--zone-blue); border-color:var(--zone-blue);">Giáo Viên</span>' : '';
 
@@ -648,22 +660,22 @@ const UIEngine = {
                         <div class="la-booking-item ${b.is_urgent ? 'urgent-item' : ''}">
                             <div class="la-booking-details">
                                 <div class="la-booking-title">
-                                    ${b.team_name} ${roleBadge}
+                                    ${escapeHTML(b.team_name)} ${roleBadge}
                                     <span style="font-weight:400; font-size:12px; color:var(--text-muted);">
                                         (${ZONES[b.zone].name} - Slot ${b.slot_number})
                                     </span>
                                 </div>
                                 <div class="la-booking-meta">
-                                    <span><i class="fa-regular fa-user"></i> <strong>Người nhận:</strong> ${b.representative}</span>
-                                    <span><i class="fa-regular fa-calendar"></i> <strong>Ngày:</strong> ${b.date}</span>
-                                    <span><i class="fa-regular fa-clock"></i> <strong>Ca:</strong> ${b.time_slot}</span>
+                                    <span><i class="fa-regular fa-user"></i> <strong>Người nhận:</strong> ${escapeHTML(b.representative)}</span>
+                                    <span><i class="fa-regular fa-calendar"></i> <strong>Ngày:</strong> ${escapeHTML(b.date)}</span>
+                                    <span><i class="fa-regular fa-clock"></i> <strong>Ca:</strong> ${escapeHTML(b.time_slot)}</span>
                                 </div>
                                 <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                                    <strong>Mục đích:</strong> ${b.purpose}
+                                    <strong>Mục đích:</strong> ${escapeHTML(b.purpose)}
                                 </div>
                                 ${b.devices.length > 0 ? `
                                     <div style="font-size:12px; color:var(--zone-yellow); margin-top:4px; font-weight:500;">
-                                        <i class="fa-solid fa-microchip"></i> <strong>Thiết bị bàn giao:</strong> ${b.devices.join(', ')}
+                                        <i class="fa-solid fa-microchip"></i> <strong>Thiết bị bàn giao:</strong> ${escapeHTML(b.devices.join(', '))}
                                     </div>
                                 ` : ''}
                                 <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
@@ -804,10 +816,10 @@ const UIEngine = {
                     ${errorBookings.map(b => `
                         <div style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:10px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                             <div>
-                                <strong style="font-size:14px; color:white;">${b.team_name}</strong> - 
-                                <span style="font-size:12px; color:var(--text-secondary);">${ZONES[b.zone].name} (${b.time_slot})</span>
+                                <strong style="font-size:14px; color:white;">${escapeHTML(b.team_name)}</strong> - 
+                                <span style="font-size:12px; color:var(--text-secondary);">${escapeHTML(ZONES[b.zone].name)} (${escapeHTML(b.time_slot)})</span>
                                 <div style="font-size:13px; color:var(--text-primary); margin-top:4px;">
-                                    ⚠️ <strong>Sự cố:</strong> ${b.error_report.description}
+                                    ⚠️ <strong>Sự cố:</strong> ${escapeHTML(b.error_report.description)}
                                 </div>
                             </div>
                             <button class="btn btn-warning btn-sm" onclick="LA_Action.complete('${b.id}')"><i class="fa-solid fa-check"></i> Hỗ trợ xong & Đóng ca</button>
@@ -865,7 +877,7 @@ const UIEngine = {
                         ${topTeams.map((team, idx) => `
                             <tr>
                                 <td style="font-weight:700; color:var(--zone-yellow);">${idx + 1}</td>
-                                <td style="font-weight:600;">${team.name}</td>
+                                <td style="font-weight:600;">${escapeHTML(team.name)}</td>
                                 <td><span class="info-badge" style="padding:2px 8px;">${team.count} ca</span></td>
                             </tr>
                         `).join('')}
@@ -897,7 +909,7 @@ const UIEngine = {
                         evalHtml = `
                             <div style="margin-top:6px; padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px; border-left:2px solid var(--primary);">
                                 <strong>Giáo viên đánh giá:</strong> ${evalBadge}
-                                <p style="font-size:11px; color:var(--text-secondary); margin-top:2px;">"${b.teacher_evaluation.notes}"</p>
+                                <p style="font-size:11px; color:var(--text-secondary); margin-top:2px;">"${escapeHTML(b.teacher_evaluation.notes)}"</p>
                             </div>
                         `;
                     } else {
@@ -911,13 +923,13 @@ const UIEngine = {
                     return `
                         <div style="background:rgba(255,255,255,0.015); border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-bottom:8px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                                <strong style="font-size:13px; color:white;">${b.team_name}</strong>
-                                <span style="font-size:11px; color:var(--text-secondary);">${b.date} (${b.time_slot})</span>
+                                <strong style="font-size:13px; color:white;">${escapeHTML(b.team_name)}</strong>
+                                <span style="font-size:11px; color:var(--text-secondary);">${escapeHTML(b.date)} (${escapeHTML(b.time_slot)})</span>
                             </div>
-                            <p style="font-size:12px; color:var(--text-secondary);">Mục đích: ${b.purpose}</p>
+                            <p style="font-size:12px; color:var(--text-secondary);">Mục đích: ${escapeHTML(b.purpose)}</p>
                             ${b.rating ? `
                                 <div style="font-size:11px; color:var(--zone-yellow); margin-top:4px;">
-                                    Học sinh phản hồi (${b.rating}★): "${b.review}"
+                                    Học sinh phản hồi (${b.rating}★): "${escapeHTML(b.review)}"
                                 </div>
                             ` : ''}
                             ${evalHtml}
