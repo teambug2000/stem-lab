@@ -153,8 +153,14 @@ const UIEngine = {
     },
 
     renderAll() {
-        document.getElementById('current-date-display').innerText = this.formatDateDisplay(currentDate);
-        document.getElementById('date-picker').value = currentDate;
+        const dateDisplay = document.getElementById('current-date-display');
+        if (dateDisplay) {
+            dateDisplay.innerText = this.formatDateDisplay(currentDate);
+        }
+        const datePicker = document.getElementById('date-picker');
+        if (datePicker) {
+            datePicker.value = currentDate;
+        }
         this.renderCalendarGrid();
         
         if (activeRole === 'assistant') {
