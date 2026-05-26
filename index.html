@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>stem-lab - Smart Lab Management System</title>
-    <!-- Google Fonts: Outfit & Inter -->
+    <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Background Blur Decorative Gradients -->
+    <!-- Background Blur Decorative Gradients (Rich Blue-Black Theme) -->
     <div class="glow-bg-1"></div>
     <div class="glow-bg-2"></div>
 
@@ -39,7 +39,7 @@
                 <select id="role-select" class="role-select">
                     <option value="student" selected>🎓 Học sinh</option>
                     <option value="assistant">⚡ Lab Assistant</option>
-                    <option value="teacher">👨‍🏫 Giáo viên</option>
+                    <option value="teacher">👨‍🏫 Giáo viên / Admin</option>
                 </select>
             </div>
         </header>
@@ -50,19 +50,19 @@
             <section id="student-view" class="view-section active">
                 <!-- Section Header -->
                 <div class="section-header">
-                    <h2><i class="fa-regular fa-calendar-days"></i> Lịch Thời Gian Thực (Real-time Calendar)</h2>
-                    <p>Quét mã QR tại cửa phòng Lab hoặc nhấp trực tiếp vào ô lịch trống để đăng ký sử dụng.</p>
+                    <h2><i class="fa-regular fa-calendar-days"></i> Lịch Phòng STEM Song Song</h2>
+                    <p>Mỗi khu vực hỗ trợ tối đa 3 nhóm hoạt động song song. Chọn ngày và click vào vị trí trống (Slot 1, 2, 3) để đăng ký.</p>
                 </div>
                 
                 <!-- Calendar Filter / Actions -->
                 <div class="calendar-actions">
                     <div class="date-selector">
                         <button class="btn-icon" id="prev-day"><i class="fa-solid fa-chevron-left"></i></button>
-                        <span id="current-date-display">Thứ Ba, 26/05/2026</span>
+                        <input type="date" id="date-picker" class="date-picker-input">
                         <button class="btn-icon" id="next-day"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                     <button class="btn btn-primary" id="btn-qr-simulate">
-                        <i class="fa-solid fa-qrcode"></i> Quét QR Đặt lịch (Simulate)
+                        <i class="fa-solid fa-qrcode"></i> Quét QR Đặt lịch nhanh (Simulate)
                     </button>
                 </div>
 
@@ -78,23 +78,107 @@
             <section id="assistant-view" class="view-section">
                 <!-- UI for Lab Assistant -->
                 <div class="section-header">
-                    <h2><i class="fa-solid fa-list-check"></i> Phê Duyệt & Bàn Giao Phòng Lab</h2>
-                    <p>Quản lý các yêu cầu đăng ký phòng STEM từ các nhóm và điều phối thiết bị.</p>
+                    <h2><i class="fa-solid fa-list-check"></i> Phê Duyệt & Vận Hành Phòng Lab</h2>
+                    <p>Duyệt tập trung theo nhóm/khung giờ, quản lý bàn giao và báo cáo sự cố.</p>
                 </div>
+                
+                <!-- Quick On-The-Spot Booking Button -->
+                <div style="display:flex; justify-content: flex-end; margin-bottom: 10px;">
+                    <button class="btn btn-success" id="btn-quick-booking">
+                        <i class="fa-solid fa-bolt-lightning"></i> Ghi nhận mượn nóng tại phòng (Verbal Booking)
+                    </button>
+                </div>
+
                 <div id="la-dashboard-content">
                     <!-- Rendered dynamically by js/ui.js -->
                 </div>
             </section>
 
-            <!-- 3. TEACHER VIEW -->
+            <!-- 3. TEACHER / ADMIN VIEW -->
             <section id="teacher-view" class="view-section">
                 <!-- UI for Teacher -->
                 <div class="section-header">
-                    <h2><i class="fa-solid fa-chart-line"></i> Dashboard Báo Cáo & Thống Kê</h2>
-                    <p>Giám sát hoạt động và đo lường tần suất sử dụng các Zone trong phòng STEM.</p>
+                    <h2><i class="fa-solid fa-chart-line"></i> Dashboard Giám Sát & Quản Trị Viên</h2>
+                    <p>Theo dõi hiệu suất sử dụng, quản lý kho thiết bị và hỗ trợ kỹ thuật kịp thời.</p>
                 </div>
-                <div id="teacher-dashboard-content">
-                    <!-- Rendered dynamically by js/ui.js -->
+
+                <!-- Sub-tabs for Teacher View -->
+                <div class="sub-tabs">
+                    <button class="sub-tab-btn active" id="tab-btn-stats">📊 Thống kê & Báo cáo</button>
+                    <button class="sub-tab-btn" id="tab-btn-devices">🛠️ Quản lý kho thiết bị</button>
+                </div>
+
+                <!-- Sub-tab 1: Stats & Feedback -->
+                <div id="teacher-stats-tab" class="sub-tab-content active">
+                    <div id="teacher-dashboard-content">
+                        <!-- Rendered dynamically by js/ui.js -->
+                    </div>
+                </div>
+
+                <!-- Sub-tab 2: Device Management (Admin Panel) -->
+                <div id="teacher-devices-tab" class="sub-tab-content">
+                    <div class="dashboard-grid">
+                        <!-- Device Editor Form -->
+                        <div class="panel-card">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-circle-plus"></i> Thêm Thiết Bị Mới</h3>
+                            </div>
+                            <form id="device-admin-form">
+                                <div class="form-group">
+                                    <label for="admin-device-name">Tên thiết bị <span class="required">*</span></label>
+                                    <input type="text" id="admin-device-name" placeholder="Ví dụ: Máy in 3D #3, Robot V5 #4" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-device-type">Loại thiết bị <span class="required">*</span></label>
+                                    <select id="admin-device-type" class="form-control" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none;">
+                                        <option value="Kính hiển vi">Kính hiển vi</option>
+                                        <option value="Vex IQ">Vex IQ</option>
+                                        <option value="Vex AIM">Vex AIM</option>
+                                        <option value="Vex V5">Vex V5</option>
+                                        <option value="KC BOT">KC BOT</option>
+                                        <option value="AI - IoT">AI - IoT</option>
+                                        <option value="Máy in 3D">Máy in 3D</option>
+                                        <option value="Snapmaker Artisan">Snapmaker Artisan</option>
+                                        <option value="Laptop">Laptop</option>
+                                        <option value="Dụng cụ cầm tay">Dụng cụ cầm tay</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-device-zone">Khu vực (Zone) <span class="required">*</span></label>
+                                    <select id="admin-device-zone" class="form-control" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none;">
+                                        <option value="yellow">Yellow Zone (Điện)</option>
+                                        <option value="red">Red Zone (Maker)</option>
+                                        <option value="open">Open Lab (Không gian mở)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-block" style="margin-top:15px;">Thêm vào kho lưu trữ</button>
+                            </form>
+                        </div>
+                        
+                        <!-- Devices Status Table -->
+                        <div class="panel-card">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-warehouse"></i> Tổng Kho Thiết Bị</h3>
+                                <span class="info-badge" id="admin-total-devices-count">61 Thiết bị</span>
+                            </div>
+                            <div class="table-wrapper" style="max-height: 400px; overflow-y:auto;">
+                                <table class="custom-table" id="admin-devices-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Mã</th>
+                                            <th>Tên Thiết Bị</th>
+                                            <th>Phân loại</th>
+                                            <th>Zone</th>
+                                            <th>Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -109,7 +193,7 @@
     <div id="booking-modal" class="modal">
         <div class="modal-content glass">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-circle-plus"></i> Đăng ký sử dụng phòng STEM</h3>
+                <h3><i class="fa-solid fa-circle-plus"></i> Đăng ký mượn phòng STEM</h3>
                 <span class="close-modal" id="close-booking-modal">&times;</span>
             </div>
             <div class="modal-body">
@@ -117,38 +201,61 @@
                     <input type="hidden" id="form-zone">
                     <input type="hidden" id="form-timeslot">
                     <input type="hidden" id="form-date">
+                    <input type="hidden" id="form-slotnumber">
                     
                     <div class="form-group-row">
                         <div class="form-group">
-                            <label>Khu vực (Zone)</label>
-                            <div class="info-badge" id="display-zone">Green Zone</div>
+                            <label>Khu vực & Slot</label>
+                            <div class="info-badge" id="display-zone">Yellow Zone (Slot 1)</div>
                         </div>
                         <div class="form-group">
-                            <label>Khung giờ (Ca học)</label>
+                            <label>Khung giờ</label>
                             <div class="info-badge" id="display-timeslot">07:00 - 09:00</div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="input-team">Tên Nhóm / Dự án <span class="required">*</span></label>
-                        <input type="text" id="input-team" placeholder="VD: VEX Team 12A1, Drone Club..." required>
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="form-role-creator">Vai trò người đặt</label>
+                            <select id="form-role-creator" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none;">
+                                <option value="student" selected>🎓 Học sinh</option>
+                                <option value="teacher">👨‍🏫 Giáo viên</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="justify-content: center; align-items: flex-start; padding-top:20px;">
+                            <label class="device-checkbox-label">
+                                <input type="checkbox" id="input-is-urgent"> ⚠️ Đăng ký GẤP (< 24h)
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="input-representative">Học sinh đại diện <span class="required">*</span></label>
-                        <input type="text" id="input-representative" placeholder="Nhập họ và tên đại diện" required>
+                    <!-- Urgent Reason (Hidden by default, shown via CSS class) -->
+                    <div class="form-group hidden" id="urgent-reason-group">
+                        <label for="input-urgent-reason">Giải trình lý do mượn gấp <span class="required">*</span></label>
+                        <input type="text" id="input-urgent-reason" placeholder="Nêu rõ lý do mượn khẩn cấp">
                     </div>
 
-                    <div class="form-group">
-                        <label>Thiết bị mượn kèm</label>
-                        <div class="devices-checklist" id="devices-checklist">
-                            <!-- Populated dynamically based on Zone -->
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label for="input-team">Tên Nhóm / Tên GV <span class="required">*</span></label>
+                            <input type="text" id="input-team" placeholder="VD: VEX Team 12A1, Thầy Hùng..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-representative">Người đại diện mượn <span class="required">*</span></label>
+                            <input type="text" id="input-representative" placeholder="Họ và tên người nhận phòng" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="input-purpose">Mục đích sử dụng <span class="required">*</span></label>
-                        <textarea id="input-purpose" rows="3" placeholder="Ghi rõ nội dung học tập, thực hành dự án" required></textarea>
+                        <label>Thiết bị mượn kèm (Chọn số lượng)</label>
+                        <div class="devices-checklist" id="devices-checklist" style="max-height: 180px;">
+                            <!-- Populated dynamically with name and quantity controls -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-purpose">Mục đích sử dụng phòng <span class="required">*</span></label>
+                        <textarea id="input-purpose" rows="2" placeholder="Ghi rõ nội dung học tập, thực hành dự án" required></textarea>
                     </div>
 
                     <div class="form-actions">
@@ -160,37 +267,94 @@
         </div>
     </div>
 
-    <!-- MODAL: Evaluation Form -->
+    <!-- MODAL: Issue & Extension Form (Report Error / Overtime) -->
+    <div id="issue-modal" class="modal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-triangle-exclamation"></i> Báo lỗi thiết bị hoặc Gia hạn</h3>
+                <span class="close-modal" id="close-issue-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="issue-form">
+                    <input type="hidden" id="issue-booking-id">
+                    
+                    <div style="margin-bottom: 20px; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; border:1px solid var(--border-color);">
+                        <p style="font-size:13px; color:var(--text-secondary);">Nhóm: <strong id="issue-display-team" style="color:white;"></strong></p>
+                        <p style="font-size:13px; color:var(--text-secondary);">Thiết bị mượn: <span id="issue-display-devices" style="color:var(--zone-yellow);"></span></p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Lựa chọn thao tác:</label>
+                        <div style="display:flex; gap:16px; margin-top:5px;">
+                            <label class="device-checkbox-label">
+                                <input type="radio" name="issue-action" value="report-error" checked> 🛠️ Báo lỗi thiết bị / dự án
+                            </label>
+                            <label class="device-checkbox-label">
+                                <input type="radio" name="issue-action" value="extend"> ⏳ Xin gia hạn làm thêm giờ
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Error section -->
+                    <div id="issue-error-section" class="form-group">
+                        <label for="input-issue-type">Loại sự cố</label>
+                        <select id="input-issue-type" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none; margin-bottom:12px;">
+                            <option value="device">Lỗi hỏng hóc thiết bị</option>
+                            <option value="project">Lỗi kỹ thuật dự án (Cần GV hỗ trợ)</option>
+                        </select>
+                        
+                        <label for="input-issue-desc">Mô tả chi tiết lỗi <span class="required">*</span></label>
+                        <textarea id="input-issue-desc" rows="3" placeholder="Nhập chi tiết bộ phận thiết bị bị hỏng hoặc lỗi dự án để Giáo viên kịp thời hỗ trợ"></textarea>
+                    </div>
+
+                    <!-- Extension section -->
+                    <div id="issue-extend-section" class="form-group hidden" style="background: rgba(6, 182, 212, 0.08); padding: 12px; border-radius: 8px; border: 1px solid rgba(6, 182, 212, 0.2);">
+                        <p style="font-size: 13px; color: var(--text-primary);">
+                            <i class="fa-solid fa-info-circle"></i> Trạng thái ca học sẽ được chuyển sang <strong>Gia hạn sử dụng (Overtime)</strong>. Học sinh tiếp tục sử dụng phòng/thiết bị tại chỗ.
+                        </p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-block">Xác nhận gửi yêu cầu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Teacher Evaluation Form -->
     <div id="evaluation-modal" class="modal">
         <div class="modal-content glass">
             <div class="modal-header">
-                <h3><i class="fa-regular fa-star"></i> Đánh giá sau sử dụng phòng Lab</h3>
+                <h3><i class="fa-solid fa-user-check"></i> Đánh giá năng lực nhóm thực hành</h3>
                 <span class="close-modal" id="close-evaluation-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="evaluation-form">
                     <input type="hidden" id="eval-booking-id">
-                    <p class="eval-intro">Chúc mừng nhóm của bạn đã hoàn thành ca học! Hãy giúp ban quản lý đánh giá chất lượng phòng Lab.</p>
                     
-                    <div class="form-group text-center">
-                        <label>Mức độ hài lòng (1 - 5 Sao)</label>
-                        <div class="star-rating">
-                            <i class="fa-regular fa-star" data-value="1"></i>
-                            <i class="fa-regular fa-star" data-value="2"></i>
-                            <i class="fa-regular fa-star" data-value="3"></i>
-                            <i class="fa-regular fa-star" data-value="4"></i>
-                            <i class="fa-regular fa-star" data-value="5"></i>
-                        </div>
-                        <input type="hidden" id="input-rating" value="5">
+                    <div style="margin-bottom: 20px; background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                        <p style="font-size:13px; color:var(--text-secondary);">Nhóm: <strong id="eval-display-team" style="color:white;"></strong></p>
+                        <p style="font-size:13px; color:var(--text-secondary);">Mục đích: <span id="eval-display-purpose" style="color:white;"></span></p>
                     </div>
 
-                    <div class="form-group">
-                        <label for="input-review">Ý kiến đóng góp / Phản hồi</label>
-                        <textarea id="input-review" rows="3" placeholder="Nhập ý kiến đóng góp của bạn về thiết bị, không gian phòng học..."></textarea>
+                    <div class="form-group text-center">
+                        <label style="margin-bottom: 12px; display:block;">Xếp loại kết quả thực hành</label>
+                        <div class="evaluation-buttons-container" style="display:flex; justify-content: center; gap: 12px;">
+                            <button type="button" class="btn btn-success eval-btn" data-value="tốt"><i class="fa-solid fa-award"></i> Tốt</button>
+                            <button type="button" class="btn btn-secondary eval-btn" data-value="đạt"><i class="fa-solid fa-thumbs-up"></i> Đạt</button>
+                            <button type="button" class="btn btn-danger eval-btn" data-value="chưa đạt"><i class="fa-solid fa-circle-exclamation"></i> Chưa Đạt</button>
+                        </div>
+                        <input type="hidden" id="input-rating" value="đạt"> <!-- Note: input-rating holds evaluated status: tốt/đạt/chưa đạt -->
+                    </div>
+
+                    <div class="form-group" style="margin-top:16px;">
+                        <label for="input-review">Nhận xét của Giáo viên <span class="required">*</span></label>
+                        <textarea id="input-review" rows="3" placeholder="Nhập nhận xét chi tiết về tinh thần làm việc, ý thức bảo quản thiết bị..." required></textarea>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá</button>
+                        <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá xếp loại</button>
                     </div>
                 </form>
             </div>

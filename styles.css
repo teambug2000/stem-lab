@@ -1,16 +1,16 @@
 /* --- 🎨 DESIGN SYSTEM & VARIABLES --- */
 :root {
-    /* Base Color Tokens */
-    --bg-main: #060913;
-    --bg-card: rgba(13, 20, 38, 0.45);
-    --bg-card-hover: rgba(22, 33, 62, 0.6);
+    /* Base Color Tokens (Rich Blue-Black Theme) */
+    --bg-main: #070b19;
+    --bg-card: rgba(13, 20, 38, 0.65);
+    --bg-card-hover: rgba(22, 33, 62, 0.85);
     --border-color: rgba(255, 255, 255, 0.08);
     --border-glow: rgba(99, 102, 241, 0.35);
     
     /* Typography Colors */
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --text-muted: #5e6b7d;
     
     /* Accent & Brand Colors */
     --primary: #6366f1;
@@ -52,14 +52,14 @@ body {
     position: relative;
 }
 
-/* Decorative Ambient Lights */
+/* Decorative Ambient Lights (Rich blue-black aura) */
 .glow-bg-1, .glow-bg-2 {
     position: absolute;
     width: 600px;
     height: 600px;
     border-radius: 50%;
     filter: blur(150px);
-    opacity: 0.15;
+    opacity: 0.18;
     z-index: -1;
     pointer-events: none;
 }
@@ -111,7 +111,7 @@ body {
     border-radius: 20px;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 .brand {
@@ -177,7 +177,7 @@ body {
 }
 
 .role-select option {
-    background-color: #0d1222;
+    background-color: #0a0f1d;
     color: var(--text-primary);
     padding: 10px;
 }
@@ -220,6 +220,47 @@ body {
     color: var(--text-secondary);
 }
 
+/* --- Sub-Tabs inside Views --- */
+.sub-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 8px;
+}
+
+.sub-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.sub-tab-btn.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--text-primary);
+    border: 1px solid var(--border-glow);
+}
+
+.sub-tab-btn:hover:not(.active) {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.sub-tab-content {
+    display: none;
+}
+
+.sub-tab-content.active {
+    display: block;
+}
+
 /* --- 🎓 STUDENT VIEW SPECIFIC --- */
 .calendar-actions {
     display: flex;
@@ -235,22 +276,41 @@ body {
 .date-selector {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 }
 
-.date-selector span {
-    font-size: 16px;
+/* Style for input type date */
+.date-picker-input {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-primary);
+    font-size: 15px;
     font-weight: 600;
-    min-width: 180px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
     text-align: center;
 }
 
+.date-picker-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+.date-picker-input:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary);
+}
+
 .btn-icon {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 10px;
     cursor: pointer;
     display: flex;
@@ -277,13 +337,13 @@ body {
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: 110px repeat(4, minmax(200px, 1fr));
-    gap: 12px;
+    grid-template-columns: 110px repeat(4, minmax(220px, 1fr));
+    gap: 14px;
 }
 
 /* Headers */
 .grid-header {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -327,106 +387,124 @@ body {
     font-weight: 400;
 }
 
-/* Cell slots */
+/* Cell slots (Flex columns containing 3 sub-slots) */
 .grid-cell {
+    background: rgba(255, 255, 255, 0.005);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 14px;
+    min-height: 200px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: all 0.25s ease-in-out;
+}
+
+/* Green Zone Mechanical Locked State */
+.grid-cell.green-locked {
+    background: rgba(16, 185, 129, 0.015);
+    border: 1px solid rgba(16, 185, 129, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px;
+    color: var(--zone-green);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.grid-cell.green-locked i {
+    font-size: 26px;
+    margin-bottom: 8px;
+    opacity: 0.6;
+}
+
+/* Sub-slot inside cells */
+.sub-slot {
+    flex: 1;
     background: rgba(255, 255, 255, 0.015);
     border: 1px dashed rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    min-height: 90px;
-    padding: 10px;
+    border-radius: 8px;
+    padding: 6px 12px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    text-align: center;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Empty Cell state */
-.grid-cell.vacant {
+/* Vacant Sub-slot state */
+.sub-slot.vacant {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 11px;
+    text-align: center;
+    align-items: center;
+    font-style: italic;
+    font-weight: 500;
 }
 
-.grid-cell.vacant i {
-    font-size: 16px;
-    margin-bottom: 4px;
-    opacity: 0.5;
+.sub-slot.vacant i {
+    font-size: 12px;
+    margin-bottom: 2px;
+    opacity: 0.4;
 }
 
-.grid-cell.vacant:hover {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid var(--border-glow);
+.sub-slot.vacant:hover {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: var(--primary);
     color: var(--text-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15);
 }
 
-/* Booked Cell states */
-.grid-cell.booked {
+/* Booked Sub-slot state */
+.sub-slot.booked {
     border-style: solid;
-    cursor: default;
-    align-items: flex-start;
+    cursor: pointer;
     text-align: left;
 }
 
-/* Status colors and backgrounds */
-.grid-cell.status-pending {
-    border-left: 4px solid var(--status-pending);
-    background: rgba(245, 158, 11, 0.08);
-}
-.grid-cell.status-approved {
-    border-left: 4px solid var(--status-approved);
-    background: rgba(16, 185, 129, 0.08);
-}
-.grid-cell.status-in_use {
-    border-left: 4px solid var(--status-inuse);
-    background: rgba(6, 182, 212, 0.08);
-}
-.grid-cell.status-completed {
-    border-left: 4px solid var(--status-completed);
-    background: rgba(100, 116, 139, 0.08);
-    opacity: 0.75;
-}
-.grid-cell.status-rejected {
-    border-left: 4px solid var(--status-rejected);
-    background: rgba(239, 68, 68, 0.08);
-}
+.sub-slot.status-pending { border-left: 3px solid var(--status-pending); background: rgba(245, 158, 11, 0.06); }
+.sub-slot.status-approved { border-left: 3px solid var(--status-approved); background: rgba(16, 185, 129, 0.06); }
+.sub-slot.status-in_use { border-left: 3px solid var(--status-inuse); background: rgba(6, 182, 212, 0.06); }
+.sub-slot.status-completed { border-left: 3px solid var(--status-completed); background: rgba(100, 116, 139, 0.06); opacity: 0.8; }
+.sub-slot.status-rejected { border-left: 3px solid var(--status-rejected); background: rgba(239, 68, 68, 0.06); }
 
-/* Cell content text */
-.cell-team {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.cell-rep {
+/* Text within subslot */
+.sub-slot-team {
     font-size: 12px;
-    color: var(--text-secondary);
+    font-weight: 700;
+    color: var(--text-primary);
     margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sub-slot-meta {
+    font-size: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.cell-status-badge {
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-    margin-top: 6px;
-    display: inline-block;
+/* Sub-slot badges */
+.sub-slot-badge {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    position: absolute;
+    right: 6px;
+    top: 6px;
+    opacity: 0.6;
 }
-
-.status-pending .cell-status-badge { background: rgba(245, 158, 11, 0.15); color: var(--status-pending); }
-.status-approved .cell-status-badge { background: rgba(16, 185, 129, 0.15); color: var(--status-approved); }
-.status-in_use .cell-status-badge { background: rgba(6, 182, 212, 0.15); color: var(--status-inuse); }
-.status-completed .cell-status-badge { background: rgba(100, 116, 139, 0.15); color: var(--status-completed); }
-.status-rejected .cell-status-badge { background: rgba(239, 68, 68, 0.15); color: var(--status-rejected); }
 
 /* --- ⚡ LAB ASSISTANT VIEW --- */
 .dashboard-grid {
@@ -471,15 +549,15 @@ body {
 .la-booking-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    max-height: 500px;
+    gap: 14px;
+    max-height: 600px;
     overflow-y: auto;
 }
 
 .la-booking-item {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.015);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 16px;
     display: flex;
     justify-content: space-between;
@@ -488,19 +566,30 @@ body {
 }
 
 .la-booking-item:hover {
-    border-color: rgba(255,255,255,0.15);
-    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255,255,255,0.12);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Urgent booking item indicator */
+.la-booking-item.urgent-item {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.02);
 }
 
 .la-booking-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    flex: 1;
+    padding-right: 16px;
 }
 
 .la-booking-title {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .la-booking-meta {
@@ -508,7 +597,7 @@ body {
     color: var(--text-secondary);
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 12px;
 }
 
 .la-booking-meta span {
@@ -519,7 +608,9 @@ body {
 
 .la-booking-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+    margin-top: 8px;
 }
 
 /* Button Classes */
@@ -541,8 +632,8 @@ body {
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover { background: var(--primary-hover); box-shadow: 0 0 12px rgba(99, 102, 241, 0.3); }
 
-.btn-secondary { background: rgba(255,255,255,0.08); color: var(--text-primary); border: 1px solid var(--border-color); }
-.btn-secondary:hover { background: rgba(255,255,255,0.15); }
+.btn-secondary { background: rgba(255,255,255,0.06); color: var(--text-primary); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background: rgba(255,255,255,0.12); }
 
 .btn-success { background: var(--zone-green); color: #fff; }
 .btn-success:hover { box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
@@ -550,7 +641,11 @@ body {
 .btn-danger { background: var(--zone-red); color: #fff; }
 .btn-danger:hover { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
 
+.btn-warning { background: var(--zone-yellow); color: #000; }
+.btn-warning:hover { box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+
 .btn-block { width: 100%; }
+.btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
 
 /* Device Status Panel */
 .devices-list {
@@ -578,7 +673,7 @@ body {
 }
 
 .device-badge.available { background: rgba(16, 185, 129, 0.15); color: var(--zone-green); }
-.device-badge.in_use { background: rgba(59, 130, 246, 0.15); color: var(--zone-blue); }
+.device-badge.in_use { background: rgba(6, 182, 212, 0.15); color: var(--status-inuse); }
 
 /* --- 👨‍🏫 TEACHER VIEW --- */
 .teacher-grid {
@@ -643,9 +738,9 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.7);
     z-index: 100;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
     align-items: center;
     justify-content: center;
 }
@@ -655,13 +750,13 @@ body {
 }
 
 .modal-content.glass {
-    background: rgba(10, 15, 30, 0.85);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(8, 12, 26, 0.92);
+    border: 1px solid rgba(255,255,255,0.12);
     border-radius: 20px;
     width: 90%;
-    max-width: 500px;
+    max-width: 520px;
     padding: 24px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.7);
     animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -725,15 +820,15 @@ body {
 }
 
 .info-badge {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
     padding: 10px 14px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
 }
 
-input[type="text"], textarea {
+input[type="text"], input[type="number"], textarea, select {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -745,7 +840,7 @@ input[type="text"], textarea {
     transition: all 0.2s;
 }
 
-input[type="text"]:focus, textarea:focus {
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
 }
@@ -757,17 +852,25 @@ input[type="text"]:focus, textarea:focus {
     margin-top: 24px;
 }
 
-/* Devices checkbox */
+/* Devices checkbox with quantity selection */
 .devices-checklist {
     display: flex;
     flex-direction: column;
     gap: 8px;
     max-height: 120px;
     overflow-y: auto;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.25);
     border: 1px solid var(--border-color);
     padding: 8px 12px;
     border-radius: 8px;
+}
+
+.device-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .device-checkbox-label {
@@ -779,34 +882,75 @@ input[type="text"]:focus, textarea:focus {
     cursor: pointer;
 }
 
-.device-checkbox-label input {
+.device-checkbox-label input[type="checkbox"], .device-checkbox-label input[type="radio"] {
     accent-color: var(--primary);
     cursor: pointer;
 }
 
-/* --- ⭐ STAR RATING --- */
-.star-rating {
+.device-qty-input {
+    width: 65px;
+    background: #05080f;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    outline: none;
+    text-align: center;
+    font-family: var(--font-primary);
+    font-size: 12px;
+}
+
+/* Hide helper class */
+.hidden {
+    display: none !important;
+}
+
+/* --- 🎗️ ALERTS & ADVANCED BADGES --- */
+.badge-urgent {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--zone-red);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.badge-overtime {
+    background: rgba(6, 182, 212, 0.12);
+    color: #06b6d4;
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+.badge-error {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--zone-red);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    animation: pulse-error 2s infinite;
+}
+
+@keyframes pulse-error {
+    0% { opacity: 0.85; }
+    50% { opacity: 0.45; }
+    100% { opacity: 0.85; }
+}
+
+/* --- 👨‍🏫 TEACHER EVALUATION --- */
+.evaluation-buttons-container {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin: 12px 0;
+    gap: 12px;
 }
 
-.star-rating i {
-    font-size: 32px;
-    color: #ffd700;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.star-rating i:hover {
-    transform: scale(1.15);
-}
-
-.text-center { text-align: center; }
-.eval-intro {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin-bottom: 16px;
-    text-align: center;
+.eval-btn.selected {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
 }
