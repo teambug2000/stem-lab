@@ -61,6 +61,7 @@ const UIEngine = {
         if (!session) {
             // Mặc định học sinh tự do sử dụng không cần đăng nhập
             activeRole = 'student';
+            document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('btn-login-trigger').style.display = 'inline-flex';
             document.getElementById('user-profile-info').style.display = 'none';
             
