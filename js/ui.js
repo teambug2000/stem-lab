@@ -78,6 +78,9 @@ const UIEngine = {
             
             // Run silent background sync on start
             this.loadDataFromCloudOnStartup();
+
+            // Check URL query parameters to auto open booking form
+            this.checkURLQueryParamsAndOpenForm();
         }
 
         // Sync date picker default
@@ -115,6 +118,9 @@ const UIEngine = {
                 
                 // Silent background sync
                 this.loadDataFromCloudOnStartup();
+
+                // Check URL query parameters to auto open booking form
+                this.checkURLQueryParamsAndOpenForm();
             } else {
                 alert('❌ Tên tài khoản hoặc mật khẩu không chính xác!');
             }
@@ -1275,6 +1281,51 @@ const UIEngine = {
             } else {
                 console.warn('⚠️ Lỗi đồng bộ ngầm khi khởi động:', res.message);
             }
+        }
+    },
+
+    checkURLQueryParamsAndOpenForm() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const zoneParam = urlParams.get('zone');
+        if (zoneParam && ZONES[zoneParam] && ZONES[zoneParam].bookable) {
+            // Chỉ cho phép học sinh hoặc giáo viên tự động mở form đặt lịch. Trợ lý không được
+            if (activeRole === 'student' || activeRole === 'teacher') {
+                const todayStr = new Date().toISOString().split('T')[0];
+                currentDate = todayStr;
+                
+                // Tìm slot trống của phân khu hôm nay
+                const bookings = StorageEngine.getBookings().filter(b => b.date === currentDate && b.zone === zoneParam && b.status !== 'rejected');
+                let foundSlot = null;
+                let foundSlotNumber = 1;
+                
+                for (const slot of TIME_SLOTS) {
+                    for (let i = 1; i <= 3; i++) {
+                        const isBooked = bookings.some(b => b.time_slot === slot && b.slot_number === i);
+                        if (!isBooked) {
+                            foundSlot = slot;
+                            foundSlotNumber = i;
+                            break;
+                        }
+                    }
+                    if (foundSlot) break;
+                }
+                
+                this.renderAll();
+                if (foundSlot) {
+                    this.showBookingModal(zoneParam, foundSlot, foundSlotNumber);
+                } else {
+                    alert(`Khu vực ${ZONES[zoneParam].name} hôm nay đã kín lịch!`);
+                }
+                
+                // Xóa URL query parameter để F5 không tự động mở lại
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        } else if (zoneParam === 'green') {
+            alert('Khu vực Green Zone không hỗ trợ đăng ký trực tuyến bằng QR Code!');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (zoneParam) {
+            alert(`Mã QR khu vực "${zoneParam}" không hợp lệ!`);
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 };
