@@ -247,7 +247,30 @@ const StemLabAPI = {
         newBooking.devices = allocatedDeviceNames;
 
         bookings.push(newBooking);
-        const saved = StorageEngine.saveBookings(bookings);
+
+        // Tạo tin nhắn Telegram báo đăng ký mới
+        const zoneName = ZONES[newBooking.zone] ? ZONES[newBooking.zone].name : newBooking.zone;
+        let notifyMessage = `➕ <b>ĐĂNG KÝ PHÒNG STEM MỚI!</b>\n` +
+            `- <b>Nhóm/Người đăng ký:</b> ${newBooking.team_name}\n` +
+            `- <b>Người đại diện:</b> ${newBooking.representative}\n` +
+            `- <b>Khu vực:</b> ${zoneName} (Slot ${newBooking.slot_number})\n` +
+            `- <b>Ngày đặt:</b> ${newBooking.date} (${newBooking.time_slot})\n` +
+            `- <b>Thiết bị mượn kèm:</b> ${newBooking.devices.join(', ') || 'Không mượn'}\n` +
+            `- <b>Mục đích:</b> ${newBooking.purpose}\n` +
+            `- <b>Trạng thái:</b> ${newBooking.status === 'approved' ? '🟢 Đã duyệt tự động (GV)' : '⏳ Chờ trợ lý duyệt'}`;
+            
+        if (newBooking.is_urgent) {
+            notifyMessage = `⚠️ 🔥 <b>[ĐĂNG KÝ GẤP &lt; 24h] PHÒNG STEM!</b>\n` +
+                `- <b>Nhóm/Người đăng ký:</b> ${newBooking.team_name}\n` +
+                `- <b>Người đại diện:</b> ${newBooking.representative}\n` +
+                `- <b>Khu vực:</b> ${zoneName} (Slot ${newBooking.slot_number})\n` +
+                `- <b>Ngày đặt:</b> ${newBooking.date} (${newBooking.time_slot})\n` +
+                `- <b>Lý do khẩn cấp:</b> <i>${newBooking.urgent_reason}</i>\n` +
+                `- <b>Mục đích:</b> ${newBooking.purpose}\n` +
+                `- <b>Trạng thái:</b> ⏳ Chờ trợ lý duyệt gấp`;
+        }
+
+        const saved = StorageEngine.saveBookings(bookings, notifyMessage);
         
         return { success: saved, booking: newBooking };
     },
@@ -281,7 +304,21 @@ const StemLabAPI = {
         }
 
         StorageEngine.saveDevices(devices);
-        const saved = StorageEngine.saveBookings(bookings);
+
+        let statusText = '';
+        if (newStatus === 'approved') statusText = '🟢 Đã phê duyệt';
+        else if (newStatus === 'rejected') statusText = '🔴 Đã từ chối';
+        else if (newStatus === 'in_use') statusText = '🔵 Đã bàn giao & bắt đầu sử dụng';
+        else if (newStatus === 'completed') statusText = '⚪ Đã hoàn thành ca thực hành';
+        
+        const zoneName = ZONES[bookings[index].zone] ? ZONES[bookings[index].zone].name : bookings[index].zone;
+        const notifyMessage = `📢 <b>CẬP NHẬT TRẠNG THÁI CA HỌC!</b>\n` +
+            `- <b>Nhóm:</b> ${bookings[index].team_name}\n` +
+            `- <b>Khu vực:</b> ${zoneName} (Slot ${bookings[index].slot_number})\n` +
+            `- <b>Ngày:</b> ${bookings[index].date} (${bookings[index].time_slot})\n` +
+            `- <b>Trạng thái mới:</b> <b>${statusText}</b>`;
+
+        const saved = StorageEngine.saveBookings(bookings, notifyMessage);
         
         return { success: saved, booking: bookings[index] };
     },
@@ -301,7 +338,15 @@ const StemLabAPI = {
             reported_at: new Date().toISOString()
         };
 
-        const saved = StorageEngine.saveBookings(bookings);
+        const typeText = issueType === 'device' ? '🛠️ Hỏng thiết bị' : '💻 Lỗi kỹ thuật dự án (Cần GV hỗ trợ)';
+        const zoneName = ZONES[bookings[index].zone] ? ZONES[bookings[index].zone].name : bookings[index].zone;
+        const notifyMessage = `🚨 ⚠️ <b>BÁO CÁO SỰ CỐ KHẨN CẤP PHÒNG LAB!</b>\n` +
+            `- <b>Nhóm báo cáo:</b> ${bookings[index].team_name}\n` +
+            `- <b>Khu vực:</b> ${zoneName} (Slot ${bookings[index].slot_number})\n` +
+            `- <b>Loại sự cố:</b> ${typeText}\n` +
+            `- <b>Mô tả chi tiết:</b> <i>${description}</i>`;
+
+        const saved = StorageEngine.saveBookings(bookings, notifyMessage);
         return { success: saved, booking: bookings[index] };
     },
 
@@ -315,7 +360,14 @@ const StemLabAPI = {
 
         bookings[index].is_overtime = true;
 
-        const saved = StorageEngine.saveBookings(bookings);
+        const zoneName = ZONES[bookings[index].zone] ? ZONES[bookings[index].zone].name : bookings[index].zone;
+        const notifyMessage = `⏳ <b>Gia hạn ca học (Overtime)!</b>\n` +
+            `- <b>Nhóm gia hạn:</b> ${bookings[index].team_name}\n` +
+            `- <b>Khu vực:</b> ${zoneName} (Slot ${bookings[index].slot_number})\n` +
+            `- <b>Thời gian:</b> ${bookings[index].date} (${bookings[index].time_slot})\n` +
+            `- <b>Trạng thái:</b> Ca học đã chuyển sang chế độ làm thêm giờ (Overtime).`;
+
+        const saved = StorageEngine.saveBookings(bookings, notifyMessage);
         return { success: saved, booking: bookings[index] };
     },
 
@@ -334,7 +386,19 @@ const StemLabAPI = {
             evaluated_at: new Date().toISOString()
         };
 
-        const saved = StorageEngine.saveBookings(bookings);
+        let evalBadge = '';
+        if (status === 'tốt') evalBadge = '🏆 Tốt';
+        else if (status === 'đạt') evalBadge = '👍 Đạt';
+        else evalBadge = '⚠️ Chưa đạt';
+
+        const zoneName = ZONES[bookings[index].zone] ? ZONES[bookings[index].zone].name : bookings[index].zone;
+        const notifyMessage = `👨‍🏫 <b>GIÁO VIÊN ĐÁNH GIÁ NĂNG LỰC NHÓM!</b>\n` +
+            `- <b>Nhóm:</b> ${bookings[index].team_name}\n` +
+            `- <b>Khu vực:</b> ${zoneName} (Slot ${bookings[index].slot_number})\n` +
+            `- <b>Xếp loại kết quả:</b> <b>${evalBadge}</b>\n` +
+            `- <b>Nhận xét của GV:</b> <i>"${notes}"</i>`;
+
+        const saved = StorageEngine.saveBookings(bookings, notifyMessage);
         return { success: saved, booking: bookings[index] };
     },
 

@@ -44,29 +44,89 @@ const DEVICE_TYPES = [
 ];
 
 // State variables
-let currentDate = '2026-05-26'; // Default starting day
+let currentDate = new Date().toISOString().split('T')[0]; // Default starting day (Dynamic to current date)
 let activeRole = 'student'; // Roles: student, assistant, teacher
 let activeTeacherTab = 'stats'; // Stats or devices
 let barChart = null;
 let pieChart = null;
+let qrScannerInstance = null; // Camera scanner instance reference
 
 const UIEngine = {
     init() {
         // Run auto-reject expired bookings on startup
         StemLabAPI.autoRejectExpiredBookings();
 
+        // Check login session
+        const session = localStorage.getItem('stem_lab_session');
+        if (!session) {
+            // Show login screen
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('user-profile-widget').style.display = 'none';
+        } else {
+            const user = JSON.parse(session);
+            activeRole = user.role;
+            
+            // Hide login screen
+            document.getElementById('login-overlay').style.display = 'none';
+            
+            // Show profile widget
+            document.getElementById('user-profile-widget').style.display = 'flex';
+            document.getElementById('user-info').innerHTML = `<i class="fa-solid fa-user"></i> ${user.name} (${user.username})`;
+            
+            // Switch to appropriate view
+            this.switchRoleView(activeRole);
+            
+            // Run silent background sync on start
+            this.loadDataFromCloudOnStartup();
+        }
+
         // Sync date picker default
-        document.getElementById('date-picker').value = currentDate;
+        const datePicker = document.getElementById('date-picker');
+        if (datePicker) {
+            datePicker.value = currentDate;
+        }
 
         this.setupEventListeners();
-        this.renderAll();
     },
 
     setupEventListeners() {
-        // Role switcher selector
-        document.getElementById('role-select').addEventListener('change', (e) => {
-            activeRole = e.target.value;
-            this.switchRoleView(activeRole);
+        // Handle login form submit
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim();
+            const passwordInput = document.getElementById('login-password').value.trim();
+            
+            // Validate login against MOCK_USERS in storage.js
+            const user = MOCK_USERS.find(u => u.username === usernameInput && u.password === passwordInput);
+            if (user) {
+                localStorage.setItem('stem_lab_session', JSON.stringify({
+                    username: user.username,
+                    name: user.name,
+                    role: user.role
+                }));
+                
+                activeRole = user.role;
+                document.getElementById('login-form').reset();
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('user-profile-widget').style.display = 'flex';
+                document.getElementById('user-info').innerHTML = `<i class="fa-solid fa-user"></i> ${user.name} (${user.username})`;
+                
+                this.switchRoleView(activeRole);
+                
+                // Silent background sync
+                this.loadDataFromCloudOnStartup();
+            } else {
+                alert('❌ Tên tài khoản hoặc mật khẩu không chính xác!');
+            }
+        });
+
+        // Handle Logout button click
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+                localStorage.removeItem('stem_lab_session');
+                document.getElementById('login-overlay').style.display = 'flex';
+                document.getElementById('user-profile-widget').style.display = 'none';
+            }
         });
 
         // Date picker change event
@@ -143,6 +203,10 @@ const UIEngine = {
             });
         });
 
+        // QR Camera Scanner click listeners
+        document.getElementById('btn-qr-scan-camera').addEventListener('click', () => this.showQRScannerCamera());
+        document.getElementById('close-qr-modal').addEventListener('click', () => this.hideQRScannerCamera());
+
         // Simulated QR scan click
         document.getElementById('btn-qr-simulate').addEventListener('click', () => this.simulateQRScan());
         
@@ -150,6 +214,57 @@ const UIEngine = {
         document.getElementById('btn-quick-booking').addEventListener('click', () => {
             this.showQuickBookingModal();
         });
+
+        // Cloud sync settings handlers
+        document.getElementById('btn-save-sheet-url').addEventListener('click', async () => {
+            const url = document.getElementById('admin-sheet-url').value.trim();
+            const token = document.getElementById('admin-telegram-token').value.trim();
+            const chatId = document.getElementById('admin-telegram-chatid').value.trim();
+            
+            StorageEngine.saveApiUrl(url);
+            StorageEngine.saveTelegramConfig(token, chatId);
+            
+            alert('💾 Đã lưu cấu hình kết nối thành công!');
+            
+            if (url) {
+                // Show floating sync loader
+                const loader = document.createElement('div');
+                loader.style.position = 'fixed';
+                loader.style.top = '50%';
+                loader.style.left = '50%';
+                loader.style.transform = 'translate(-50%, -50%)';
+                loader.style.background = 'rgba(10, 15, 30, 0.95)';
+                loader.style.color = '#fff';
+                loader.style.padding = '20px 45px';
+                loader.style.borderRadius = '14px';
+                loader.style.zIndex = '99999';
+                loader.style.border = '1px solid rgba(255,255,255,0.1)';
+                loader.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+                loader.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tải và đồng bộ dữ liệu từ Google Sheets...';
+                document.body.appendChild(loader);
+                
+                const res = await StorageEngine.loadFromGoogleSheets();
+                document.body.removeChild(loader);
+                
+                alert(res.message);
+                this.renderAll();
+            }
+        });
+
+        // Reset system handler
+        document.getElementById('btn-reset-system').addEventListener('click', () => {
+            if (confirm('⚠️ CẢNH BÁO: Hành động này sẽ XÓA TOÀN BỘ dữ liệu bookings, hoàn trả toàn bộ kho 61 thiết bị về trạng thái trống mặc định và đồng bộ trực tiếp lên đám mây. Bạn có muốn tiếp tục?')) {
+                StorageEngine.reset();
+                alert('🧹 Đã hoàn tất đặt lại dữ liệu gốc của hệ thống!');
+                this.renderAll();
+            }
+        });
+
+        // Populate initial configs in Teacher View
+        document.getElementById('admin-sheet-url').value = StorageEngine.getApiUrl();
+        const tg = StorageEngine.getTelegramConfig();
+        document.getElementById('admin-telegram-token').value = tg.token;
+        document.getElementById('admin-telegram-chatid').value = tg.chatId;
     },
 
     renderAll() {
@@ -1066,6 +1181,101 @@ const UIEngine = {
         const selectedSlot = TIME_SLOTS[slotIdx];
 
         this.showBookingModal(selectedZone, selectedSlot, slotNum);
+    },
+
+    // --- 10. REAL CAMERA QR CODE SCANNER (html5-qrcode) ---
+    showQRScannerCamera() {
+        document.getElementById('qr-scanner-modal').classList.add('active');
+        
+        // Khởi tạo camera
+        qrScannerInstance = new Html5Qrcode("qr-reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        
+        const qrSuccessCallback = (decodedText) => {
+            console.log(`Scan success: ${decodedText}`);
+            this.hideQRScannerCamera();
+            this.handleScannedQR(decodedText);
+        };
+        
+        qrScannerInstance.start({ facingMode: "environment" }, config, qrSuccessCallback)
+            .catch(err => {
+                alert("Không thể khởi chạy camera. Hãy kiểm tra quyền truy cập camera của trình duyệt!\nChi tiết: " + err);
+                this.hideQRScannerCamera();
+            });
+    },
+
+    hideQRScannerCamera() {
+        document.getElementById('qr-scanner-modal').classList.remove('active');
+        if (qrScannerInstance) {
+            qrScannerInstance.stop().then(() => {
+                qrScannerInstance = null;
+            }).catch(err => {
+                console.error("Lỗi khi dừng camera:", err);
+                qrScannerInstance = null;
+            });
+        }
+    },
+
+    handleScannedQR(text) {
+        let zone = null;
+        try {
+            // Thử phân tích URL
+            const url = new URL(text.startsWith('http') ? text : 'https://fake-stem-lab.com/' + text);
+            zone = url.searchParams.get('zone');
+        } catch(e) {
+            if (text.includes('zone=')) {
+                zone = text.split('zone=')[1].split('&')[0];
+            }
+        }
+        
+        if (zone && ZONES[zone] && ZONES[zone].bookable) {
+            // Đặt ngày hiện tại thành ngày hôm nay
+            const todayStr = new Date().toISOString().split('T')[0];
+            currentDate = todayStr;
+            
+            // Tìm slot trống của Zone
+            const bookings = StorageEngine.getBookings().filter(b => b.date === currentDate && b.zone === zone && b.status !== 'rejected');
+            let foundSlot = null;
+            let foundSlotNumber = 1;
+            
+            for (const slot of TIME_SLOTS) {
+                for (let i = 1; i <= 3; i++) {
+                    const isBooked = bookings.some(b => b.time_slot === slot && b.slot_number === i);
+                    if (!isBooked) {
+                        foundSlot = slot;
+                        foundSlotNumber = i;
+                        break;
+                    }
+                }
+                if (foundSlot) break;
+            }
+            
+            if (foundSlot) {
+                this.renderAll();
+                this.showBookingModal(zone, foundSlot, foundSlotNumber);
+            } else {
+                alert(`Khu vực ${ZONES[zone].name} hôm nay đã kín lịch!`);
+                this.renderAll();
+            }
+        } else if (zone === 'green') {
+            alert('Khu vực Green Zone không hỗ trợ đăng ký trực tuyến bằng QR Code!');
+        } else {
+            alert(`Mã QR quét được không hợp lệ: "${text}".\nMã QR hợp lệ phải chứa thông tin khu vực (ví dụ: ?zone=yellow).`);
+        }
+    },
+
+    async loadDataFromCloudOnStartup() {
+        const url = StorageEngine.getApiUrl();
+        if (url) {
+            console.log('☁️ Khởi tạo: Đang tải dữ liệu từ Google Sheets...');
+            const res = await StorageEngine.loadFromGoogleSheets();
+            if (res.success) {
+                console.log('☁️ Đồng bộ dữ liệu thành công.');
+                this.renderAll();
+            } else {
+                console.warn('⚠️ Lỗi đồng bộ ngầm khi khởi động:', res.message);
+            }
+        }
     }
 };
 

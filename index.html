@@ -29,10 +29,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- HTML5 QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <!-- App CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Login Screen Overlay -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card glass">
+            <div class="login-logo">
+                <i class="fa-solid fa-flask-vial"></i>
+            </div>
+            <h2>Đăng Nhập STEM Lab</h2>
+            <p>Hệ thống đặt lịch & quản lý phòng STEM số hóa</p>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Tên tài khoản</label>
+                    <input type="text" id="login-username" placeholder="Nhập tài khoản (VD: hocsinh, troly, giaovien)" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mật khẩu</label>
+                    <input type="password" id="login-password" placeholder="Nhập mật khẩu" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 20px; font-size: 15px; padding: 12px;"><i class="fa-solid fa-key"></i> Đăng Nhập</button>
+            </form>
+            <div class="login-footer">
+                <p>Tài khoản mẫu: hocsinh / troly / giaovien (Mật khẩu: 123456)</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Background Blur Decorative Gradients (Rich Blue-Black Theme) -->
     <div class="glow-bg-1"></div>
     <div class="glow-bg-2"></div>
@@ -50,14 +78,10 @@
                 </div>
             </div>
 
-            <!-- Role Switcher Widget -->
-            <div class="role-switcher-widget">
-                <span class="role-label"><i class="fa-solid fa-user-shield"></i> Vai trò:</span>
-                <select id="role-select" class="role-select">
-                    <option value="student" selected>🎓 Học sinh</option>
-                    <option value="assistant">⚡ Lab Assistant</option>
-                    <option value="teacher">👨‍🏫 Giáo viên / Admin</option>
-                </select>
+            <!-- User Profile & Logout Widget -->
+            <div class="user-profile-widget" id="user-profile-widget" style="display: none;">
+                <span class="user-info" id="user-info"><i class="fa-solid fa-user"></i> Đang tải...</span>
+                <button class="btn btn-secondary btn-sm" id="btn-logout" style="margin-left: 10px; padding: 4px 8px; font-size: 11px;"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
             </div>
         </header>
 
@@ -78,9 +102,14 @@
                         <input type="date" id="date-picker" class="date-picker-input">
                         <button class="btn-icon" id="next-day"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
-                    <button class="btn btn-primary" id="btn-qr-simulate">
-                        <i class="fa-solid fa-qrcode"></i> Quét QR Đặt lịch nhanh (Simulate)
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" id="btn-qr-scan-camera">
+                            <i class="fa-solid fa-camera"></i> Quét QR bằng Camera
+                        </button>
+                        <button class="btn btn-primary" id="btn-qr-simulate">
+                            <i class="fa-solid fa-qrcode"></i> Nhập mã QR thủ công
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Live Grid Schedule -->
@@ -193,6 +222,40 @@
                                         <!-- Rendered dynamically -->
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <!-- Cloud Sync Configuration -->
+                        <div class="panel-card teacher-grid-full" style="margin-top: 24px;">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-cloud-arrow-up"></i> Cấu Hình Vận Hành Đám Mây (Google Sheets & Telegram)</h3>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <h4 style="margin-bottom: 8px; color: var(--zone-blue);"><i class="fa-brands fa-google-drive"></i> Kết nối Google Sheets API</h4>
+                                    <div class="form-group">
+                                        <label for="admin-sheet-url">Google Apps Script Web App URL</label>
+                                        <input type="text" id="admin-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none; width: 100%;">
+                                    </div>
+                                    <button type="button" class="btn btn-primary" id="btn-save-sheet-url" style="margin-top: 10px;"><i class="fa-solid fa-floppy-disk"></i> Lưu liên kết & Đồng bộ</button>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 8px; color: var(--zone-yellow);"><i class="fa-solid fa-paper-plane"></i> Cấu hình Thông báo Telegram</h4>
+                                    <div class="form-group">
+                                        <label for="admin-telegram-token">Telegram Bot Token</label>
+                                        <input type="password" id="admin-telegram-token" placeholder="Nhập Bot Token của bạn" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none; width: 100%;">
+                                    </div>
+                                    <div class="form-group" style="margin-top: 8px;">
+                                        <label for="admin-telegram-chatid">Telegram Chat ID (Nhóm/Cá nhân)</label>
+                                        <input type="text" id="admin-telegram-chatid" placeholder="Nhập Chat ID nhận tin nhắn (ví dụ: -100...)" style="background:#0a0f1d; border:1px solid var(--border-color); color:white; padding:10px; border-radius:8px; outline:none; width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0; max-width: 70%;">
+                                    <i class="fa-solid fa-circle-info"></i> Sau khi lưu cấu hình, dữ liệu sẽ được tự động đồng bộ ngầm hai chiều (Offline-First) và gửi thông báo trực tiếp về điện thoại khi có biến động.
+                                </p>
+                                <button type="button" class="btn btn-secondary" id="btn-reset-system" style="border-color: var(--zone-red); color: var(--zone-red);"><i class="fa-solid fa-trash-can"></i> Đặt Lại Dữ Liệu Gốc Toàn Hệ Thống</button>
                             </div>
                         </div>
                     </div>
@@ -374,6 +437,20 @@
                         <button type="submit" class="btn btn-primary btn-block">Gửi đánh giá xếp loại</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: QR Scanner Camera -->
+    <div id="qr-scanner-modal" class="modal">
+        <div class="modal-content glass" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-camera"></i> Quét mã QR Zone</h3>
+                <span class="close-modal" id="close-qr-modal">&times;</span>
+            </div>
+            <div class="modal-body text-center">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px;">Hướng camera của bạn vào mã QR dán ở khu vực để tự động chọn Zone.</p>
+                <div id="qr-reader" style="width: 100%; max-width: 400px; margin: 0 auto; background: black; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color);"></div>
             </div>
         </div>
     </div>

@@ -5,8 +5,23 @@
 const STORAGE_KEYS = {
     BOOKINGS: 'stem_lab_bookings',
     DEVICES: 'stem_lab_devices',
-    PREFERENCES: 'stem_lab_preferences'
+    PREFERENCES: 'stem_lab_preferences',
+    USERS: 'stem_lab_users',
+    SESSION: 'stem_lab_session',
+    API_URL: 'stem_lab_api_url',
+    TELEGRAM_TOKEN: 'stem_lab_tg_token',
+    TELEGRAM_CHATID: 'stem_lab_tg_chatid'
 };
+
+// Tài khoản đăng nhập mẫu
+const MOCK_USERS = [
+    { username: 'hocsinh', password: '123456', name: '🎓 Học sinh', role: 'student' },
+    { username: 'troly', password: '123456', name: '⚡ Lab Assistant', role: 'assistant' },
+    { username: 'giaovien', password: '123456', name: '👨‍🏫 Giáo viên / Admin', role: 'teacher' }
+];
+
+// Lấy ngày hiện tại động làm ngày mặc định cho dữ liệu mẫu
+const todayStr = new Date().toISOString().split('T')[0];
 
 // Function to generate the default 61 devices
 function generateDefaultDevices() {
@@ -62,7 +77,7 @@ const MOCK_BOOKINGS = [
         team_name: 'VEX Team 12A1',
         representative: 'Nguyễn Văn A',
         zone: 'yellow',
-        date: '2026-05-26', // Current default day
+        date: todayStr, // Current default day
         time_slot: '07:00-09:00',
         slot_number: 1,
         devices: ['Bộ học tập AI - IoT #1', 'Bộ học tập AI - IoT #2', 'Laptop #1'],
@@ -74,8 +89,8 @@ const MOCK_BOOKINGS = [
         urgent_reason: '',
         is_overtime: false,
         error_report: null,
-        teacher_evaluation: { status: 'tốt', notes: 'Nhóm làm việc tập trung, hoàn thành tốt mô hình', evaluated_at: '2026-05-26T09:15:00Z' },
-        created_at: new Date('2026-05-25T08:00:00').toISOString(),
+        teacher_evaluation: { status: 'tốt', notes: 'Nhóm làm việc tập trung, hoàn thành tốt mô hình', evaluated_at: new Date().toISOString() },
+        created_at: new Date().toISOString(),
         rating: 5,
         review: 'Phòng sạch sẽ, thiết bị hoạt động rất mượt mà.'
     },
@@ -84,7 +99,7 @@ const MOCK_BOOKINGS = [
         team_name: 'Drone Team',
         representative: 'Trần Thị B',
         zone: 'red',
-        date: '2026-05-26',
+        date: todayStr,
         time_slot: '07:00-09:00',
         slot_number: 1,
         devices: ['Máy in 3D #1'],
@@ -97,7 +112,7 @@ const MOCK_BOOKINGS = [
         is_overtime: true, // Overtime active
         error_report: null,
         teacher_evaluation: null,
-        created_at: new Date('2026-05-25T09:30:00').toISOString(),
+        created_at: new Date().toISOString(),
         rating: null,
         review: ''
     },
@@ -106,7 +121,7 @@ const MOCK_BOOKINGS = [
         team_name: 'IoT 12A2',
         representative: 'Lê Văn C',
         zone: 'yellow',
-        date: '2026-05-26',
+        date: todayStr,
         time_slot: '13:30-15:30',
         slot_number: 1,
         devices: ['Bộ học tập AI - IoT #3'],
@@ -119,7 +134,7 @@ const MOCK_BOOKINGS = [
         is_overtime: false,
         error_report: null,
         teacher_evaluation: null,
-        created_at: new Date('2026-05-25T14:00:00').toISOString(),
+        created_at: new Date().toISOString(),
         rating: null,
         review: ''
     },
@@ -128,7 +143,7 @@ const MOCK_BOOKINGS = [
         team_name: 'Smart Car 11A5',
         representative: 'Phạm Minh D',
         zone: 'yellow',
-        date: '2026-05-26',
+        date: todayStr,
         time_slot: '17:30-19:30',
         slot_number: 2, // Parallel booking in Yellow Zone!
         devices: ['Bộ học tập AI - IoT #4', 'Laptop #2'],
@@ -139,9 +154,9 @@ const MOCK_BOOKINGS = [
         is_urgent: false,
         urgent_reason: '',
         is_overtime: false,
-        error_report: { type: 'device', description: 'Cảm biến siêu âm bị hỏng, cần hỗ trợ đổi cảm biến khác', reported_at: '2026-05-26T18:00:00Z' }, // Error active
+        error_report: { type: 'device', description: 'Cảm biến siêu âm bị hỏng, cần hỗ trợ đổi cảm biến khác', reported_at: new Date().toISOString() }, // Error active
         teacher_evaluation: null,
-        created_at: new Date('2026-05-25T16:45:00').toISOString(),
+        created_at: new Date().toISOString(),
         rating: null,
         review: ''
     },
@@ -150,7 +165,7 @@ const MOCK_BOOKINGS = [
         team_name: 'Thầy Hoàng (GV Vật lý)',
         representative: 'Nguyễn Văn Hoàng',
         zone: 'red',
-        date: '2026-05-26',
+        date: todayStr,
         time_slot: '09:00-11:00',
         slot_number: 1,
         devices: ['Máy Snapmaker Artisan #1'],
@@ -163,7 +178,7 @@ const MOCK_BOOKINGS = [
         is_overtime: false,
         error_report: null,
         teacher_evaluation: null,
-        created_at: new Date('2026-05-25T10:00:00').toISOString(),
+        created_at: new Date().toISOString(),
         rating: null,
         review: ''
     }
@@ -191,6 +206,88 @@ const StorageEngine = {
         }
     },
 
+    getApiUrl() {
+        return localStorage.getItem(STORAGE_KEYS.API_URL) || '';
+    },
+
+    saveApiUrl(url) {
+        localStorage.setItem(STORAGE_KEYS.API_URL, url);
+    },
+
+    getTelegramConfig() {
+        return {
+            token: localStorage.getItem(STORAGE_KEYS.TELEGRAM_TOKEN) || '',
+            chatId: localStorage.getItem(STORAGE_KEYS.TELEGRAM_CHATID) || ''
+        };
+    },
+
+    saveTelegramConfig(token, chatId) {
+        localStorage.setItem(STORAGE_KEYS.TELEGRAM_TOKEN, token);
+        localStorage.setItem(STORAGE_KEYS.TELEGRAM_CHATID, chatId);
+    },
+
+    async syncToGoogleSheets(notificationMessage = null) {
+        const url = this.getApiUrl();
+        if (!url) return false;
+
+        const payload = {
+            action: 'sync',
+            bookings: this.getBookings(),
+            devices: this.getDevices()
+        };
+
+        const tg = this.getTelegramConfig();
+        if (notificationMessage && tg.token && tg.chatId) {
+            payload.notifyTelegram = true;
+            payload.telegramToken = tg.token;
+            payload.telegramChatId = tg.chatId;
+            payload.notificationMessage = notificationMessage;
+        }
+
+        try {
+            // Sử dụng content-type text/plain để tránh lỗi CORS Preflight
+            const response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                }
+            });
+            const result = await response.json();
+            console.log('🔄 Cloud Sync Result:', result);
+            return result.success;
+        } catch (e) {
+            console.error('❌ Cloud Sync failed:', e);
+            return false;
+        }
+    },
+
+    async loadFromGoogleSheets() {
+        const url = this.getApiUrl();
+        if (!url) return { success: false, message: 'Chưa cấu hình API URL!' };
+
+        try {
+            const response = await fetch(`${url}?action=all`);
+            const result = await response.json();
+            if (result.success) {
+                if (result.bookings) {
+                    localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(result.bookings));
+                    this._bookingsCache = result.bookings;
+                }
+                if (result.devices) {
+                    localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(result.devices));
+                    this._devicesCache = result.devices;
+                }
+                return { success: true, message: 'Đồng bộ dữ liệu từ Google Sheets thành công!' };
+            } else {
+                return { success: false, message: result.message || 'Lỗi tải dữ liệu!' };
+            }
+        } catch (e) {
+            console.error('❌ Load from Cloud failed:', e);
+            return { success: false, message: 'Không thể kết nối đến Google Sheets: ' + e.message };
+        }
+    },
+
     getBookings() {
         if (this._bookingsCache !== null) {
             return this._bookingsCache;
@@ -205,10 +302,12 @@ const StorageEngine = {
         }
     },
 
-    saveBookings(bookings) {
+    saveBookings(bookings, notificationMessage = null) {
         try {
             localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
             this._bookingsCache = bookings;
+            // Gọi sync ngầm
+            this.syncToGoogleSheets(notificationMessage);
             return true;
         } catch (e) {
             console.error('❌ Error saving bookings:', e);
@@ -234,6 +333,8 @@ const StorageEngine = {
         try {
             localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(devices));
             this._devicesCache = devices;
+            // Gọi sync ngầm
+            this.syncToGoogleSheets();
             return true;
         } catch (e) {
             console.error('❌ Error saving devices:', e);
@@ -248,6 +349,8 @@ const StorageEngine = {
             this._bookingsCache = null;
             this._devicesCache = null;
             this.init();
+            // Đồng bộ reset lên đám mây
+            this.syncToGoogleSheets("🧹 <b>Hệ thống đã được đặt lại dữ liệu gốc!</b>");
             return true;
         } catch (e) {
             console.error('❌ Error resetting storage:', e);
