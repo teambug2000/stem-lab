@@ -16,7 +16,7 @@
             errDiv.style.zIndex = '9999';
             errDiv.style.fontFamily = 'monospace';
             errDiv.style.whiteSpace = 'pre-wrap';
-            errDiv.innerHTML = `<h3>🚨 Lỗi JavaScript Runtime:</h3><p>\${message}</p><p>Tại: \${source}:\${lineno}:\${colno}</p><p>Stack: \${error ? error.stack : 'N/A'}</p>`;
+            errDiv.innerHTML = `<h3>🚨 Lỗi JavaScript Runtime:</h3><p>${message}</p><p>Tại: ${source}:${lineno}:${colno}</p><p>Stack: ${error ? error.stack : 'N/A'}</p>`;
             document.body.appendChild(errDiv);
         };
     </script>
