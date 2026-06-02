@@ -235,6 +235,80 @@ StemLabAPI.createBooking({
 const statsAfter = StemLabAPI.getAvailableDevicesCount(futureDate, '07:00-09:00');
 assert(statsAfter['AI - IoT'].available === 7, `Sau khi mượn 3 bộ, số lượng còn lại chính xác là 7 (Thực tế: ${statsAfter['AI - IoT'].available})`);
 
+// Test 7: Hệ thống điểm uy tín (Credit Score) và kiểm tra chế tài
+console.log('\n🏆 Test Case 7: Hệ thống điểm uy tín (Credit Score) & Chặn đặt lịch');
+
+// 7.1 Lấy điểm mặc định
+const defaultScore = StorageEngine.getTeamReputation('Nhom Moi');
+assert(defaultScore === 100, `Điểm uy tín mặc định của nhóm mới là 100 (Thực tế: ${defaultScore})`);
+
+// 7.2 Đánh giá Chưa đạt không có lý do -> Bị chặn
+const testBookingForEval = {
+    id: 'test_eval_1',
+    team_name: 'Vex 12A1',
+    representative: 'Học sinh A',
+    zone: 'digital',
+    date: futureDate,
+    time_slot: '07:00-09:00',
+    slot_number: 1,
+    devices: [],
+    device_requests: {},
+    purpose: 'Luyện tập',
+    status: 'completed',
+    role_creator: 'student'
+};
+
+// Seed booking vào storage
+const allB = StorageEngine.getBookings();
+allB.push(testBookingForEval);
+StorageEngine.saveBookings(allB);
+
+const evalResNoNote = StemLabAPI.submitTeacherEvaluation('test_eval_1', 'chưa đạt', '');
+assert(evalResNoNote.success === false, 'Giáo viên bị chặn xếp loại Chưa Đạt nếu không ghi nhận xét lý do');
+
+// 7.3 Đánh giá Chưa đạt có lý do -> Trừ 30 điểm
+const evalResWithNote = StemLabAPI.submitTeacherEvaluation('test_eval_1', 'chưa đạt', 'Không vệ sinh phòng Lab');
+assert(evalResWithNote.success === true, 'Giáo viên đánh giá thành công khi có kèm lý do');
+const scoreAfterFirstFail = StorageEngine.getTeamReputation('Vex 12A1');
+assert(scoreAfterFirstFail === 70, `Nhóm bị trừ 30 điểm uy tín, còn lại: ${scoreAfterFirstFail}`);
+
+// 7.4 Tích lũy về 0 -> Bị khóa đặt lịch
+const dummyBooking2 = { ...testBookingForEval, id: 'test_eval_2' };
+const dummyBooking3 = { ...testBookingForEval, id: 'test_eval_3' };
+const currentB = StorageEngine.getBookings();
+currentB.push(dummyBooking2, dummyBooking3);
+StorageEngine.saveBookings(currentB);
+
+StemLabAPI.submitTeacherEvaluation('test_eval_2', 'chưa đạt', 'Đi trễ');
+StemLabAPI.submitTeacherEvaluation('test_eval_3', 'chưa đạt', 'Nghịch phá thiết bị');
+
+const finalScore = StorageEngine.getTeamReputation('Vex 12A1');
+assert(finalScore === 10, `Điểm uy tín sau 3 lần phạt (100 - 30*3) còn lại 10 (Thực tế: ${finalScore})`);
+
+// Phạt tiếp lần 4 để về 0
+const dummyBooking4 = { ...testBookingForEval, id: 'test_eval_4' };
+const currentB2 = StorageEngine.getBookings();
+currentB2.push(dummyBooking4);
+StorageEngine.saveBookings(currentB2);
+StemLabAPI.submitTeacherEvaluation('test_eval_4', 'chưa đạt', 'Lỗi cuối cùng');
+assert(StorageEngine.getTeamReputation('Vex 12A1') === 0, 'Điểm uy tín đã về 0 thành công');
+
+// Thử đặt lịch mới khi điểm = 0 -> Phải bị chặn
+const newBookingWhenBlocked = {
+    id: 'test_blocked_booking',
+    team_name: 'Vex 12A1',
+    representative: 'Học sinh A',
+    zone: 'digital',
+    date: futureDate,
+    time_slot: '09:00-11:00',
+    slot_number: 1,
+    device_requests: {},
+    purpose: 'Cố tình đặt lịch',
+    role_creator: 'student'
+};
+const blockCheck = StemLabAPI.validateBooking(newBookingWhenBlocked);
+assert(blockCheck.valid === false, 'Hệ thống chặn thành công nhóm có uy tín = 0 đặt lịch mới');
+
 // --- BÁO CÁO TỔNG KẾT ---
 console.log('\n=======================================');
 console.log('📊 BÁO CÁO KẾT QUẢ KIỂM THỬ:');

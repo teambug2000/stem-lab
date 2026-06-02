@@ -281,6 +281,153 @@ const UIEngine = {
             }
         });
 
+        // --- 🔍 WIDGET TRA CỨU UY TÍN NHÓM ---
+        const btnReputationLookup = document.getElementById('btn-reputation-lookup');
+        const reputationSearchInput = document.getElementById('reputation-search-input');
+        
+        const handleReputationLookup = () => {
+            const teamName = reputationSearchInput.value.trim();
+            if (!teamName) {
+                alert('Vui lòng nhập tên nhóm cần tra cứu!');
+                return;
+            }
+            const score = StorageEngine.getTeamReputation(teamName);
+            const allBookings = StorageEngine.getBookings();
+            
+            const lastFailedBooking = allBookings
+                .filter(b => b.team_name.trim().toLowerCase() === teamName.trim().toLowerCase() && 
+                             b.teacher_evaluation && 
+                             (b.teacher_evaluation.status === 'chưa đạt' || b.teacher_evaluation.status === 'failed'))
+                .sort((a, b) => new Date(b.teacher_evaluation.evaluated_at) - new Date(a.teacher_evaluation.evaluated_at))[0];
+
+            let extraInfo = '';
+            if (score === 0) {
+                let failReason = "Không có lý do cụ thể";
+                if (lastFailedBooking && lastFailedBooking.teacher_evaluation.notes) {
+                    failReason = lastFailedBooking.teacher_evaluation.notes;
+                }
+                extraInfo = `\n\n🚨 Nhóm hiện đang bị KHÓA đặt lịch!\nLý do: "${failReason}"`;
+            } else if (score < 40) {
+                extraInfo = `\n\n⚠️ Cảnh báo: Điểm uy tín đang ở mức NGUY HIỂM. Nếu bị Chưa Đạt tiếp sẽ bị khóa đặt lịch!`;
+            } else {
+                extraInfo = `\n\n✅ Nhóm hoạt động bình thường, uy tín tốt.`;
+            }
+
+            alert(`🏆 Điểm Uy Tín của nhóm "${teamName}" là: ${score}/100${extraInfo}`);
+        };
+
+        if (btnReputationLookup && reputationSearchInput) {
+            btnReputationLookup.addEventListener('click', handleReputationLookup);
+            reputationSearchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    handleReputationLookup();
+                }
+            });
+        }
+
+        // --- 🤖 AUTOCOMPLETE & AUTOFILL TÊN NHÓM ---
+        const inputTeam = document.getElementById('input-team');
+        const inputRepresentative = document.getElementById('input-representative');
+        const suggestionsBox = document.getElementById('autocomplete-suggestions');
+        
+        const closeSuggestions = () => {
+            if (suggestionsBox) {
+                suggestionsBox.classList.add('hidden');
+                suggestionsBox.innerHTML = '';
+            }
+        };
+
+        if (inputTeam && suggestionsBox) {
+            const handleTeamInput = () => {
+                const val = inputTeam.value.trim();
+                const bookings = StorageEngine.getBookings();
+                
+                const uniqueTeams = [];
+                const seen = new Set();
+                bookings.forEach(b => {
+                    const nameNormal = b.team_name.trim();
+                    const key = nameNormal.toLowerCase();
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueTeams.push(nameNormal);
+                    }
+                });
+
+                if (!val) {
+                    closeSuggestions();
+                    this.checkTeamReputationWarning('');
+                    return;
+                }
+
+                const filtered = uniqueTeams.filter(t => t.toLowerCase().includes(val.toLowerCase()));
+                if (filtered.length === 0) {
+                    closeSuggestions();
+                    this.checkTeamReputationWarning(val);
+                    return;
+                }
+
+                suggestionsBox.innerHTML = '';
+                filtered.forEach(team => {
+                    const score = StorageEngine.getTeamReputation(team);
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-suggestion';
+                    div.innerHTML = `
+                        <span>${escapeHTML(team)}</span>
+                        <span class="suggestion-score">Uy tín: ${score}đ</span>
+                    `;
+                    div.addEventListener('click', () => {
+                        inputTeam.value = team;
+                        closeSuggestions();
+                        
+                        const teamBookings = bookings.filter(b => b.team_name.trim().toLowerCase() === team.trim().toLowerCase());
+                        if (teamBookings.length > 0) {
+                            const lastBooking = teamBookings.sort((a,b) => b.created_at.localeCompare(a.created_at))[0];
+                            if (lastBooking && inputRepresentative) {
+                                inputRepresentative.value = lastBooking.representative;
+                            }
+                        }
+                        
+                        this.checkTeamReputationWarning(team);
+                    });
+                    suggestionsBox.appendChild(div);
+                });
+                suggestionsBox.classList.remove('hidden');
+                
+                this.checkTeamReputationWarning(val);
+            };
+
+            inputTeam.addEventListener('input', handleTeamInput);
+            inputTeam.addEventListener('focus', handleTeamInput);
+            
+            document.addEventListener('click', (e) => {
+                if (e.target !== inputTeam && e.target !== suggestionsBox && !suggestionsBox.contains(e.target)) {
+                    closeSuggestions();
+                }
+            });
+        }
+
+        // --- 👨‍🏫 DYNAMIC RATING & COMMENT VALIDATION ---
+        const teacherEvalBtns = document.querySelectorAll('.eval-btn');
+        const inputReview = document.getElementById('input-review');
+        if (inputReview) {
+            teacherEvalBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const ratingVal = e.currentTarget.getAttribute('data-value');
+                    const requiredStar = document.querySelector('label[for="input-review"] .required');
+                    
+                    if (ratingVal === 'chưa đạt') {
+                        inputReview.required = true;
+                        inputReview.placeholder = 'BẮT BUỘC: Nhập lý do xếp loại Chưa đạt (ví dụ: Không dọn dẹp vệ sinh, làm hỏng thiết bị, nghịch phá...)';
+                        if (requiredStar) requiredStar.style.display = 'inline';
+                    } else {
+                        inputReview.required = false;
+                        inputReview.placeholder = 'Nhập nhận xét chi tiết về tinh thần làm việc, ý thức bảo quản thiết bị... (Không bắt buộc)';
+                        if (requiredStar) requiredStar.style.display = 'none';
+                    }
+                });
+            });
+        }
+
         // Populate initial configs in Teacher View
         document.getElementById('admin-sheet-url').value = StorageEngine.getApiUrl();
         const tg = StorageEngine.getTelegramConfig();
@@ -460,26 +607,32 @@ const UIEngine = {
 
     // Click behavior on a booked cell slot
     handleBookingCellClick(booking) {
+        const score = StorageEngine.getTeamReputation(booking.team_name);
+        let evalDetail = '';
+        if (booking.teacher_evaluation) {
+            let statusText = booking.teacher_evaluation.status.toUpperCase();
+            evalDetail = `\n- Đánh giá của GV: ${statusText}\n- Nhận xét của GV: "${booking.teacher_evaluation.notes}"`;
+        }
+        
+        const detailsMessage = `📋 Chi tiết ca học:\n- Nhóm: ${booking.team_name} (Uy tín: ${score}/100)\n- Người mượn: ${booking.representative}\n- Mục đích: ${booking.purpose}\n- Trạng thái: ${booking.status}\n- Thiết bị: ${booking.devices.join(', ') || 'Không mượn'}${evalDetail}`;
+
         if (activeRole === 'student') {
-            // Students can leave feedback if completed
             if (booking.status === 'completed' && booking.rating === null) {
                 this.showEvaluationModal(booking.id);
             } else {
-                alert(`📋 Chi tiết ca học:\n- Nhóm: ${booking.team_name}\n- Người mượn: ${booking.representative}\n- Mục đích: ${booking.purpose}\n- Trạng thái: ${booking.status}\n- Thiết bị: ${booking.devices.join(', ')}`);
+                alert(detailsMessage);
             }
         } else if (activeRole === 'assistant') {
-            // Lab assistant can trigger actions on active bookings (Issue modal)
             if (booking.status === 'in_use') {
                 this.showIssueModal(booking);
             } else {
-                this.switchRoleView('assistant');
+                alert(detailsMessage);
             }
         } else if (activeRole === 'teacher') {
-            // Teachers can evaluate
             if (booking.status === 'completed' && booking.teacher_evaluation === null) {
                 this.showTeacherEvaluationModal(booking);
             } else {
-                this.switchRoleView('teacher');
+                alert(detailsMessage);
             }
         }
     },
@@ -490,6 +643,20 @@ const UIEngine = {
         document.getElementById('input-is-urgent').checked = false;
         document.getElementById('input-urgent-reason').value = '';
         document.getElementById('urgent-reason-group').classList.add('hidden');
+
+        // Reset autocomplete and reputation warnings
+        this.checkTeamReputationWarning('');
+        const suggestionsBox = document.getElementById('autocomplete-suggestions');
+        if (suggestionsBox) {
+            suggestionsBox.classList.add('hidden');
+            suggestionsBox.innerHTML = '';
+        }
+
+        // Autofill from Local Storage if available on this device
+        const lastTeam = localStorage.getItem('stem_lab_last_team') || '';
+        const lastRep = localStorage.getItem('stem_lab_last_rep') || '';
+        document.getElementById('input-team').value = lastTeam;
+        document.getElementById('input-representative').value = lastRep;
 
         // Populate fields
         document.getElementById('form-zone').value = zone;
@@ -511,6 +678,10 @@ const UIEngine = {
 
         this.renderFormDevicesChecklist(zone, slot);
         this.toggleUrgentFields();
+
+        if (lastTeam) {
+            this.checkTeamReputationWarning(lastTeam);
+        }
 
         document.getElementById('booking-modal').classList.add('active');
     },
@@ -644,6 +815,11 @@ const UIEngine = {
 
         if (result.success) {
             alert(`🎉 Đăng ký thành công! ${result.booking.status === 'approved' ? 'Lịch của Giáo viên tự động được phê duyệt.' : 'Đã gửi yêu cầu phê duyệt.'}`);
+            
+            // Save team details to cache
+            localStorage.setItem('stem_lab_last_team', team_name);
+            localStorage.setItem('stem_lab_last_rep', representative);
+
             this.hideBookingModal();
             this.renderAll();
         } else {
@@ -712,12 +888,17 @@ const UIEngine = {
         document.getElementById('eval-display-team').innerText = booking.team_name;
         document.getElementById('eval-display-purpose').innerText = booking.purpose;
         
-        // Reset evaluation buttons selection
         document.querySelectorAll('.eval-btn').forEach(b => b.classList.remove('selected'));
-        // Select 'đạt' by default
         document.querySelector('.eval-btn[data-value="đạt"]').classList.add('selected');
         document.getElementById('input-rating').value = 'đạt';
-        document.getElementById('input-review').value = '';
+        
+        const inputReview = document.getElementById('input-review');
+        inputReview.value = '';
+        inputReview.required = false;
+        inputReview.placeholder = 'Nhập nhận xét chi tiết về tinh thần làm việc, ý thức bảo quản thiết bị... (Không bắt buộc)';
+        
+        const requiredStar = document.querySelector('label[for="input-review"] .required');
+        if (requiredStar) requiredStar.style.display = 'none';
 
         document.getElementById('evaluation-modal').classList.add('active');
     },
@@ -738,7 +919,7 @@ const UIEngine = {
             this.hideEvaluationModal();
             this.renderAll();
         } else {
-            alert('❌ Có lỗi xảy ra!');
+            alert('❌ Xếp loại thất bại:\n' + result.message);
         }
     },
 
@@ -1053,7 +1234,7 @@ const UIEngine = {
 
         tableCard.innerHTML = `
             <div class="panel-header">
-                <h3><i class="fa-solid fa-trophy"></i> Top 5 Nhóm Sử Dụng Nhiều Nhất</h3>
+                <h3><i class="fa-solid fa-trophy"></i> Xếp Hạng Uy Tín & Tần Suất Đặt Lịch</h3>
             </div>
             <div class="table-wrapper">
                 <table class="custom-table">
@@ -1061,18 +1242,26 @@ const UIEngine = {
                         <tr>
                             <th>Hạng</th>
                             <th>Tên Nhóm</th>
-                            <th>Số ca sử dụng</th>
+                            <th>Số ca đặt</th>
+                            <th>Điểm Uy Tín</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${topTeams.length === 0 ? '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Chưa có dữ liệu thống kê.</td></tr>' : ''}
-                        ${topTeams.map((team, idx) => `
-                            <tr>
-                                <td style="font-weight:700; color:var(--zone-yellow);">${idx + 1}</td>
-                                <td style="font-weight:600;">${escapeHTML(team.name)}</td>
-                                <td><span class="info-badge" style="padding:2px 8px;">${team.count} ca</span></td>
-                            </tr>
-                        `).join('')}
+                        ${topTeams.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Chưa có dữ liệu thống kê.</td></tr>' : ''}
+                        ${topTeams.map((team, idx) => {
+                            const score = StorageEngine.getTeamReputation(team.name);
+                            let scoreColor = 'var(--zone-green)';
+                            if (score === 0) scoreColor = 'var(--zone-red)';
+                            else if (score < 40) scoreColor = 'var(--zone-yellow)';
+                            return `
+                                <tr>
+                                    <td style="font-weight:700; color:var(--zone-yellow);">${idx + 1}</td>
+                                    <td style="font-weight:600;">${escapeHTML(team.name)}</td>
+                                    <td><span class="info-badge" style="padding:2px 8px;">${team.count} ca</span></td>
+                                    <td><strong style="color: ${scoreColor};">${score}/100</strong></td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1337,6 +1526,68 @@ window.LA_Action = {
         if (confirm('Bạn có chắc muốn thiết lập lại toàn bộ dữ liệu hệ thống về trạng thái ban đầu?')) {
             StorageEngine.reset();
             UIEngine.renderAll();
+        }
+    },
+    
+    checkTeamReputationWarning(teamName) {
+        const warningBox = document.getElementById('reputation-warning-box');
+        const submitBtn = document.querySelector('#booking-form button[type="submit"]');
+        
+        if (!teamName || teamName.trim() === '') {
+            if (warningBox) warningBox.classList.add('hidden');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+            return;
+        }
+
+        const score = StorageEngine.getTeamReputation(teamName);
+        if (!warningBox) return;
+
+        if (score === 0) {
+            const allBookings = StorageEngine.getBookings();
+            const lastFailedBooking = allBookings
+                .filter(b => b.team_name.trim().toLowerCase() === teamName.trim().toLowerCase() && 
+                             b.teacher_evaluation && 
+                             (b.teacher_evaluation.status === 'chưa đạt' || b.teacher_evaluation.status === 'failed'))
+                .sort((a, b) => new Date(b.teacher_evaluation.evaluated_at) - new Date(a.teacher_evaluation.evaluated_at))[0];
+
+            let failReason = "Không có lý do cụ thể";
+            if (lastFailedBooking && lastFailedBooking.teacher_evaluation.notes) {
+                failReason = lastFailedBooking.teacher_evaluation.notes;
+            }
+
+            warningBox.className = 'reputation-warning-container reputation-warning-danger';
+            warningBox.innerHTML = `<i class="fa-solid fa-ban"></i> <strong>Nhóm đang bị KHÓA đặt lịch!</strong> Điểm uy tín của nhóm đã về 0.<br>Lý do vi phạm gần nhất: <i>"${failReason}"</i>`;
+            warningBox.classList.remove('hidden');
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.4';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+        } else if (score < 40) {
+            warningBox.className = 'reputation-warning-container reputation-warning-warning';
+            warningBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Cảnh báo vùng nguy hiểm!</strong> Điểm uy tín của nhóm hiện tại là <strong>${score}/100</strong>. Nếu bị đánh giá "Chưa đạt" ở ca này, nhóm sẽ bị khóa đặt lịch!`;
+            warningBox.classList.remove('hidden');
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+        } else {
+            warningBox.className = 'reputation-warning-container reputation-warning-success';
+            warningBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> Điểm uy tín nhóm: <strong>${score}/100</strong> (Trạng thái hoạt động tốt).`;
+            warningBox.classList.remove('hidden');
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
         }
     }
 };

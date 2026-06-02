@@ -86,6 +86,27 @@ const StemLabAPI = {
     validateBooking(newBooking) {
         const todayStr = new Date().toISOString().split('T')[0];
 
+        // --- RULE 0: Reputation Point check (Kiểm tra điểm uy tín) ---
+        const teamReputation = StorageEngine.getTeamReputation(newBooking.team_name);
+        if (teamReputation === 0) {
+            const allBookings = StorageEngine.getBookings();
+            const lastFailedBooking = allBookings
+                .filter(b => b.team_name.trim().toLowerCase() === newBooking.team_name.trim().toLowerCase() && 
+                             b.teacher_evaluation && 
+                             (b.teacher_evaluation.status === 'chưa đạt' || b.teacher_evaluation.status === 'failed'))
+                .sort((a, b) => new Date(b.teacher_evaluation.evaluated_at) - new Date(a.teacher_evaluation.evaluated_at))[0];
+
+            let failReason = "Không có lý do cụ thể";
+            if (lastFailedBooking && lastFailedBooking.teacher_evaluation.notes) {
+                failReason = lastFailedBooking.teacher_evaluation.notes;
+            }
+
+            return {
+                valid: false,
+                message: `Nhóm "${newBooking.team_name}" đã bị KHÓA đăng ký do điểm uy tín về 0!\nLý do vi phạm gần nhất: "${failReason}".\nVui lòng liên hệ Giáo viên/Trợ lý để được xử lý.`
+            };
+        }
+
         // --- RULE 1: Past Dates Block (Khóa lịch quá khứ) ---
         if (newBooking.date < todayStr) {
             return { valid: false, message: 'Không thể tác động hoặc đăng ký lịch trong quá khứ!' };
@@ -380,23 +401,46 @@ const StemLabAPI = {
             return { success: false, message: 'Không tìm thấy ca học!' };
         }
 
+        const teamName = bookings[index].team_name;
+        const normalizedStatus = status.trim().toLowerCase(); // 'tốt' | 'đạt' | 'chưa đạt'
+
+        if (normalizedStatus === 'chưa đạt' && (!notes || notes.trim() === '')) {
+            return { success: false, message: 'Bắt buộc phải nhập nhận xét lý do khi đánh giá Chưa đạt!' };
+        }
+
         bookings[index].teacher_evaluation = {
-            status: status, // 'tốt' | 'đạt' | 'chưa đạt'
+            status: normalizedStatus,
             notes: notes.trim(),
             evaluated_at: new Date().toISOString()
         };
 
+        // Update team reputation score
+        let currentScore = StorageEngine.getTeamReputation(teamName);
+        let newScore = currentScore;
+
+        if (normalizedStatus === 'chưa đạt') {
+            newScore = Math.max(0, currentScore - 30);
+        } else if (normalizedStatus === 'tốt') {
+            newScore = Math.min(100, currentScore + 10);
+        }
+
+        StorageEngine.setTeamReputation(teamName, newScore);
+
         let evalBadge = '';
-        if (status === 'tốt') evalBadge = '🏆 Tốt';
-        else if (status === 'đạt') evalBadge = '👍 Đạt';
-        else evalBadge = '⚠️ Chưa đạt';
+        if (normalizedStatus === 'tốt') evalBadge = '🏆 Tốt (+10đ Uy tín)';
+        else if (normalizedStatus === 'đạt') evalBadge = '👍 Đạt (Giữ nguyên điểm)';
+        else evalBadge = '⚠️ Chưa đạt (-30đ Uy tín)';
 
         const zoneName = ZONES[bookings[index].zone] ? ZONES[bookings[index].zone].name : bookings[index].zone;
-        const notifyMessage = `👨‍🏫 <b>GIÁO VIÊN ĐÁNH GIÁ NĂNG LỰC NHÓM!</b>\n` +
-            `- <b>Nhóm:</b> ${bookings[index].team_name}\n` +
+        let notifyMessage = `👨‍🏫 <b>GIÁO VIÊN ĐÁNH GIÁ NĂNG LỰC NHÓM!</b>\n` +
+            `- <b>Nhóm:</b> ${teamName} (Uy tín mới: <b>${newScore}/100</b>)\n` +
             `- <b>Khu vực:</b> ${zoneName} (Slot ${bookings[index].slot_number})\n` +
             `- <b>Xếp loại kết quả:</b> <b>${evalBadge}</b>\n` +
             `- <b>Nhận xét của GV:</b> <i>"${notes}"</i>`;
+
+        if (newScore === 0) {
+            notifyMessage += `\n🚨 <b>CẢNH BÁO:</b> Nhóm ${teamName} đã bị <b>KHÓA ĐẶT LỊCH</b> do điểm uy tín về 0!`;
+        }
 
         const saved = StorageEngine.saveBookings(bookings, notifyMessage);
         return { success: saved, booking: bookings[index] };

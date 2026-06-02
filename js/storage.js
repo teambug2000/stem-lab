@@ -10,7 +10,8 @@ const STORAGE_KEYS = {
     SESSION: 'stem_lab_session',
     API_URL: 'stem_lab_api_url',
     TELEGRAM_TOKEN: 'stem_lab_tg_token',
-    TELEGRAM_CHATID: 'stem_lab_tg_chatid'
+    TELEGRAM_CHATID: 'stem_lab_tg_chatid',
+    TEAM_REPUTATION: 'stem_lab_team_reputation'
 };
 
 // Tài khoản đăng nhập mẫu
@@ -270,10 +271,50 @@ const StorageEngine = {
         }
     },
 
+    getTeamReputation(teamName) {
+        if (!teamName) return 100;
+        const normalized = teamName.trim().toLowerCase();
+        try {
+            const dataStr = localStorage.getItem(STORAGE_KEYS.TEAM_REPUTATION);
+            const reputations = dataStr ? JSON.parse(dataStr) : {};
+            return reputations[normalized] !== undefined ? reputations[normalized] : 100;
+        } catch (e) {
+            console.error('❌ Error getting team reputation:', e);
+            return 100;
+        }
+    },
+
+    setTeamReputation(teamName, score) {
+        if (!teamName) return false;
+        const normalized = teamName.trim().toLowerCase();
+        const clampedScore = Math.max(0, Math.min(100, score));
+        try {
+            const dataStr = localStorage.getItem(STORAGE_KEYS.TEAM_REPUTATION);
+            const reputations = dataStr ? JSON.parse(dataStr) : {};
+            reputations[normalized] = clampedScore;
+            localStorage.setItem(STORAGE_KEYS.TEAM_REPUTATION, JSON.stringify(reputations));
+            return true;
+        } catch (e) {
+            console.error('❌ Error setting team reputation:', e);
+            return false;
+        }
+    },
+
+    getAllTeamsReputation() {
+        try {
+            const dataStr = localStorage.getItem(STORAGE_KEYS.TEAM_REPUTATION);
+            return dataStr ? JSON.parse(dataStr) : {};
+        } catch (e) {
+            console.error('❌ Error getting all team reputations:', e);
+            return {};
+        }
+    },
+
     reset() {
         try {
             localStorage.removeItem(STORAGE_KEYS.BOOKINGS);
             localStorage.removeItem(STORAGE_KEYS.DEVICES);
+            localStorage.removeItem(STORAGE_KEYS.TEAM_REPUTATION);
             this._bookingsCache = null;
             this._devicesCache = null;
             this.init();

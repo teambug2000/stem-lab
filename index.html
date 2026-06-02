@@ -77,6 +77,13 @@
                 </div>
             </div>
 
+            <!-- Tra Cứu Uy Tín Nhóm (Widget công cộng) -->
+            <div class="reputation-lookup-container">
+                <i class="fa-solid fa-shield-halved" style="color: var(--primary); font-size: 14px;"></i>
+                <input type="text" id="reputation-search-input" class="reputation-lookup-input" placeholder="Nhập tên nhóm tra uy tín...">
+                <button class="btn btn-primary btn-sm reputation-lookup-btn" id="btn-reputation-lookup"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu</button>
+            </div>
+
             <!-- User Profile & Login/Logout Widget -->
             <div class="user-profile-widget" id="user-profile-widget">
                 <button class="btn btn-secondary btn-sm" id="btn-login-trigger"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập quản trị</button>
@@ -315,15 +322,19 @@
                     </div>
 
                     <div class="form-group-row">
-                        <div class="form-group">
+                        <div class="form-group autocomplete-container">
                             <label for="input-team">Tên Nhóm / Tên GV <span class="required">*</span></label>
-                            <input type="text" id="input-team" placeholder="VD: VEX Team 12A1, Thầy Hùng..." required>
+                            <input type="text" id="input-team" placeholder="VD: VEX Team 12A1, Thầy Hùng..." required autocomplete="off">
+                            <div id="autocomplete-suggestions" class="autocomplete-dropdown hidden"></div>
                         </div>
                         <div class="form-group">
                             <label for="input-representative">Người đại diện mượn <span class="required">*</span></label>
                             <input type="text" id="input-representative" placeholder="Họ và tên người nhận phòng" required>
                         </div>
                     </div>
+
+                    <!-- Hộp cảnh báo uy tín nhóm -->
+                    <div id="reputation-warning-box" class="reputation-warning-container hidden"></div>
 
                     <div class="form-group">
                         <label>Thiết bị mượn kèm (Chọn số lượng)</label>

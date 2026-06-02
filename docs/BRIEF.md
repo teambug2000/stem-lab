@@ -40,14 +40,22 @@ Xây dựng một **Web App** (Hệ thống quản lý thông minh) giúp số h
   - Bảng xếp hạng top các nhóm sử dụng phòng STEM nhiều nhất.
 - [ ] **Lưu Trữ Dữ Liệu:** Sử dụng LocalStorage để giữ dữ liệu lịch đặt, trạng thái duyệt và các đánh giá khi F5.
 
-### 🎁 Phase 2 (Phát triển thêm):
-- [ ] Tích hợp camera quét mã QR thật để truy cập nhanh link đặt lịch.
-- [ ] Gửi thông báo tự động qua Email/Telegram thật cho học sinh và Lab Assistant.
-- [ ] Đồng bộ dữ liệu trực tiếp với Google Sheets.
+### 🎯 Nâng cấp mới (Kỷ luật & Tối ưu hóa đặt lịch):
+- [ ] **Mô hình 100 Điểm Uy Tín (Credit Score) & Chế tài minh bạch:**
+  - Mỗi nhóm đăng ký lần đầu sẽ được cấp **100 điểm uy tín mặc định** (được lưu trữ dựa trên Tên nhóm).
+  - Khi Giáo viên đánh giá **Chưa đạt** ở ca học trước, nhóm bị trừ **30 điểm**. **Bắt buộc Giáo viên phải điền nhận xét/lý do chưa đạt (không được để trống)**.
+  - Nhận xét/ghi chú lý do chưa đạt của Giáo viên sẽ được hiển thị trực tiếp cho học sinh (trên Lịch Grid của ca học đó, trên thanh thông báo chặn đặt lịch hoặc khi tra cứu trạng thái nhóm) để học sinh nắm được lỗi vi phạm.
+  - Khi Giáo viên đánh giá **Tốt** ở ca học trước, nhóm được cộng lại **10 điểm** khuyến khích (tối đa không vượt quá 100 điểm).
+  - Điểm tín nhiệm dưới 40 điểm: Hệ thống hiển thị cảnh báo đỏ nguy cơ bị khóa.
+  - Điểm tín nhiệm về 0 điểm: **Khóa tự động quyền đặt lịch** của nhóm đó. Form đăng ký sẽ bị chặn kèm hiển thị lý do vi phạm gần nhất của nhóm.
+- [ ] **Cơ chế Tự động gợi ý & Ghi nhớ (Autocomplete & Autofill):**
+  - Khi học sinh gõ ký tự đầu tiên tại ô Tên nhóm, form sẽ gợi ý danh sách các tên nhóm đã có trong lịch sử để tránh gõ sai chính tả.
+  - Khi click chọn nhóm gợi ý, hệ thống tự điền luôn tên **Người đại diện** đã đăng ký gần nhất của nhóm đó.
+  - Ghi nhớ thông tin đặt lịch gần nhất trên trình duyệt của thiết bị cá nhân để điền nhanh trong các lần sau.
 
 ## 5. ƯỚC TÍNH SƠ BỘ
-- **Độ phức tạp:** Trung bình (chủ yếu xử lý logic kiểm tra trùng lịch, quota và vẽ biểu đồ dashboard trực quan).
-- **Rủi ro:** Cần đảm bảo trải nghiệm chuyển đổi vai trò (Role Switcher) mượt mà để người dùng dễ hình dung luồng hoạt động đầy đủ.
+- **Độ phức tạp:** Trung bình (cần cập nhật cấu trúc database để lưu điểm uy tín theo nhóm, xử lý logic autocompletion của ô input, và tích hợp bộ kiểm tra chặn đặt lịch).
+- **Rủi ro:** Cần đồng bộ chính xác dữ liệu điểm uy tín của nhóm dựa trên tên nhóm viết hoa/viết thường để tránh bị qua mặt bằng việc đổi chữ hoa/thường (cần chuẩn hóa chuỗi về lowercase khi kiểm tra).
 
 ## 6. BƯỚC TIẾP THEO
-→ Chạy `/plan` để bắt đầu thiết kế chi tiết (giao diện, cấu trúc dữ liệu, và danh sách các task cần code).
+→ Chạy `/plan` để lên kế hoạch triển khai chi tiết các tính năng nâng cấp này.
