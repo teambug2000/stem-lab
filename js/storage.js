@@ -23,166 +23,63 @@ const MOCK_USERS = [
 // Lấy ngày hiện tại động làm ngày mặc định cho dữ liệu mẫu
 const todayStr = new Date().toISOString().split('T')[0];
 
-// Function to generate the default 61 devices
+// Function to generate the default devices
 function generateDefaultDevices() {
     const list = [];
     
-    // 1. Kính hiển vi: 2 cái (yellow)
+    // 1. Kính hiển vi: 2 cái (science)
     for (let i = 1; i <= 2; i++) {
-        list.push({ id: `dev_khv_${i}`, name: `Kính hiển vi #${i}`, type: 'Kính hiển vi', zone: 'yellow', status: 'available' });
+        list.push({ id: `dev_khv_${i}`, name: `Kính hiển vi #${i}`, type: 'Kính hiển vi', zone: 'science', status: 'available' });
     }
-    // 2. Vex IQ: 7 bộ (red)
+    // 2. Vex IQ: 7 bộ (robotics)
     for (let i = 1; i <= 7; i++) {
-        list.push({ id: `dev_viq_${i}`, name: `Bộ Vex IQ #${i}`, type: 'Vex IQ', zone: 'red', status: 'available' });
+        list.push({ id: `dev_viq_${i}`, name: `Bộ Vex IQ #${i}`, type: 'Vex IQ', zone: 'robotics', status: 'available' });
     }
-    // 3. Vex AIM: 4 bộ (red)
+    // 3. Vex AIM: 4 bộ (robotics)
     for (let i = 1; i <= 4; i++) {
-        list.push({ id: `dev_vaim_${i}`, name: `Bộ Vex AIM #${i}`, type: 'Vex AIM', zone: 'red', status: 'available' });
+        list.push({ id: `dev_vaim_${i}`, name: `Bộ Vex AIM #${i}`, type: 'Vex AIM', zone: 'robotics', status: 'available' });
     }
-    // 4. Vex V5: 3 bộ (red)
+    // 4. Vex V5: 3 bộ (robotics)
     for (let i = 1; i <= 3; i++) {
-        list.push({ id: `dev_vv5_${i}`, name: `Bộ Vex V5 #${i}`, type: 'Vex V5', zone: 'red', status: 'available' });
+        list.push({ id: `dev_vv5_${i}`, name: `Bộ Vex V5 #${i}`, type: 'Vex V5', zone: 'robotics', status: 'available' });
     }
-    // 5. KC BOT: 7 bộ (red)
+    // 5. KC BOT: 7 bộ (digital)
     for (let i = 1; i <= 7; i++) {
-        list.push({ id: `dev_kcb_${i}`, name: `Bộ KC BOT #${i}`, type: 'KC BOT', zone: 'red', status: 'available' });
+        list.push({ id: `dev_kcb_${i}`, name: `Bộ KC BOT #${i}`, type: 'KC BOT', zone: 'digital', status: 'available' });
     }
-    // 6. Bộ học tập AI - IoT: 10 bộ (yellow)
+    // 6. Bộ học tập AI - IoT: 10 bộ (digital)
     for (let i = 1; i <= 10; i++) {
-        list.push({ id: `dev_aiot_${i}`, name: `Bộ học tập AI - IoT #${i}`, type: 'AI - IoT', zone: 'yellow', status: 'available' });
+        list.push({ id: `dev_aiot_${i}`, name: `Bộ học tập AI - IoT #${i}`, type: 'AI - IoT', zone: 'digital', status: 'available' });
     }
-    // 7. Máy in 3D: 2 máy (red)
+    // 7. Máy in 3D: 2 máy (fablab)
     for (let i = 1; i <= 2; i++) {
-        list.push({ id: `dev_m3d_${i}`, name: `Máy in 3D #${i}`, type: 'Máy in 3D', zone: 'red', status: 'available' });
+        list.push({ id: `dev_m3d_${i}`, name: `Máy in 3D #${i}`, type: 'Máy in 3D', zone: 'fablab', status: 'available' });
     }
-    // 8. Máy Snapmaker Artisan 3 trong 1: 1 máy (red)
-    list.push({ id: 'dev_sma_1', name: 'Máy Snapmaker Artisan #1', type: 'Snapmaker Artisan', zone: 'red', status: 'available' });
+    // 8. Máy Snapmaker Artisan 3 trong 1: 1 máy (fablab)
+    list.push({ id: 'dev_sma_1', name: 'Máy Snapmaker Artisan #1', type: 'Snapmaker Artisan', zone: 'fablab', status: 'available' });
     
-    // 9. Laptop: 10 cái (open)
+    // 9. Laptop: 10 cái (digital)
     for (let i = 1; i <= 10; i++) {
-        list.push({ id: `dev_lt_${i}`, name: `Laptop #${i}`, type: 'Laptop', zone: 'open', status: 'available' });
+        list.push({ id: `dev_lt_${i}`, name: `Laptop #${i}`, type: 'Laptop', zone: 'digital', status: 'available' });
     }
-    // 10. Dụng cụ, máy móc cầm tay: 15 bộ (yellow)
+    // 10. Dụng cụ, máy móc cầm tay: 15 bộ (fablab)
     for (let i = 1; i <= 15; i++) {
-        list.push({ id: `dev_cc_${i}`, name: `Dụng cụ cầm tay #${i}`, type: 'Dụng cụ cầm tay', zone: 'yellow', status: 'available' });
+        list.push({ id: `dev_cc_${i}`, name: `Dụng cụ cầm tay #${i}`, type: 'Dụng cụ cầm tay', zone: 'fablab', status: 'available' });
+    }
+    // 11. Bộ thí nghiệm Vật lý: 5 bộ (science)
+    for (let i = 1; i <= 5; i++) {
+        list.push({ id: `dev_phy_${i}`, name: `Bộ thí nghiệm Vật lý #${i}`, type: 'Bộ thí nghiệm Vật lý', zone: 'science', status: 'available' });
+    }
+    // 12. Bộ thí nghiệm Hóa học: 5 bộ (science)
+    for (let i = 1; i <= 5; i++) {
+        list.push({ id: `dev_che_${i}`, name: `Bộ thí nghiệm Hóa học #${i}`, type: 'Bộ thí nghiệm Hóa học', zone: 'science', status: 'available' });
     }
     
     return list;
 }
 
-// Initial Mock Bookings Data with Slot Numbering & Advanced Statuses
-const MOCK_BOOKINGS = [
-    {
-        id: 'book_mock_1',
-        team_name: 'VEX Team 12A1',
-        representative: 'Nguyễn Văn A',
-        zone: 'yellow',
-        date: todayStr, // Current default day
-        time_slot: '07:00-09:00',
-        slot_number: 1,
-        devices: ['Bộ học tập AI - IoT #1', 'Bộ học tập AI - IoT #2', 'Laptop #1'],
-        device_requests: { 'AI - IoT': 2, 'Laptop': 1 },
-        purpose: 'Thử nghiệm hệ thống nhận diện gương mặt thông minh',
-        status: 'approved',
-        role_creator: 'student',
-        is_urgent: false,
-        urgent_reason: '',
-        is_overtime: false,
-        error_report: null,
-        teacher_evaluation: { status: 'tốt', notes: 'Nhóm làm việc tập trung, hoàn thành tốt mô hình', evaluated_at: new Date().toISOString() },
-        created_at: new Date().toISOString(),
-        rating: 5,
-        review: 'Phòng sạch sẽ, thiết bị hoạt động rất mượt mà.'
-    },
-    {
-        id: 'book_mock_2',
-        team_name: 'Drone Team',
-        representative: 'Trần Thị B',
-        zone: 'red',
-        date: todayStr,
-        time_slot: '07:00-09:00',
-        slot_number: 1,
-        devices: ['Máy in 3D #1'],
-        device_requests: { 'Máy in 3D #1': 1 },
-        purpose: 'In 3D khung bảo vệ cánh quạt drone',
-        status: 'approved',
-        role_creator: 'student',
-        is_urgent: false,
-        urgent_reason: '',
-        is_overtime: true, // Overtime active
-        error_report: null,
-        teacher_evaluation: null,
-        created_at: new Date().toISOString(),
-        rating: null,
-        review: ''
-    },
-    {
-        id: 'book_mock_3',
-        team_name: 'IoT 12A2',
-        representative: 'Lê Văn C',
-        zone: 'yellow',
-        date: todayStr,
-        time_slot: '13:30-15:30',
-        slot_number: 1,
-        devices: ['Bộ học tập AI - IoT #3'],
-        device_requests: { 'AI - IoT': 1 },
-        purpose: 'Lập trình cảm biến nhiệt độ DHT11 hiển thị LCD',
-        status: 'pending',
-        role_creator: 'student',
-        is_urgent: false,
-        urgent_reason: '',
-        is_overtime: false,
-        error_report: null,
-        teacher_evaluation: null,
-        created_at: new Date().toISOString(),
-        rating: null,
-        review: ''
-    },
-    {
-        id: 'book_mock_4',
-        team_name: 'Smart Car 11A5',
-        representative: 'Phạm Minh D',
-        zone: 'yellow',
-        date: todayStr,
-        time_slot: '17:30-19:30',
-        slot_number: 2, // Parallel booking in Yellow Zone!
-        devices: ['Bộ học tập AI - IoT #4', 'Laptop #2'],
-        device_requests: { 'AI - IoT': 1, 'Laptop': 1 },
-        purpose: 'Lắp ráp xe tự hành dò đường cảm biến siêu âm',
-        status: 'in_use',
-        role_creator: 'student',
-        is_urgent: false,
-        urgent_reason: '',
-        is_overtime: false,
-        error_report: { type: 'device', description: 'Cảm biến siêu âm bị hỏng, cần hỗ trợ đổi cảm biến khác', reported_at: new Date().toISOString() }, // Error active
-        teacher_evaluation: null,
-        created_at: new Date().toISOString(),
-        rating: null,
-        review: ''
-    },
-    {
-        id: 'book_mock_5',
-        team_name: 'Thầy Hoàng (GV Vật lý)',
-        representative: 'Nguyễn Văn Hoàng',
-        zone: 'red',
-        date: todayStr,
-        time_slot: '09:00-11:00',
-        slot_number: 1,
-        devices: ['Máy Snapmaker Artisan #1'],
-        device_requests: { 'Máy Snapmaker Artisan #1': 1 },
-        purpose: 'Khắc CNC mô hình bài học Vật Lý cho lớp 10',
-        status: 'approved',
-        role_creator: 'teacher', // Teacher booking
-        is_urgent: false,
-        urgent_reason: '',
-        is_overtime: false,
-        error_report: null,
-        teacher_evaluation: null,
-        created_at: new Date().toISOString(),
-        rating: null,
-        review: ''
-    }
-];
+// Initial Mock Bookings Data (Cleared)
+const MOCK_BOOKINGS = [];
 
 const StorageEngine = {
     _bookingsCache: null,
@@ -190,14 +87,45 @@ const StorageEngine = {
 
     init() {
         try {
-            // Check if Bookings exists, if not, write mock data
-            if (!localStorage.getItem(STORAGE_KEYS.BOOKINGS)) {
+            // Load and migrate existing bookings if necessary
+            let bookings = [];
+            const bookingsData = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
+            if (bookingsData) {
+                try {
+                    bookings = JSON.parse(bookingsData);
+                    let migrated = false;
+                    bookings.forEach(b => {
+                        if (b.zone === 'green') { b.zone = 'fablab'; migrated = true; }
+                        else if (b.zone === 'yellow') { b.zone = 'digital'; migrated = true; }
+                        else if (b.zone === 'red') { b.zone = 'robotics'; migrated = true; }
+                        else if (b.zone === 'open') { b.zone = 'science'; migrated = true; }
+                    });
+                    if (migrated) {
+                        localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(bookings));
+                    }
+                } catch (e) {
+                    console.error('Migration error:', e);
+                }
+            } else {
                 localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(MOCK_BOOKINGS));
             }
-            // Check if Devices exists, if not, write mock data
-            if (!localStorage.getItem(STORAGE_KEYS.DEVICES)) {
-                localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(generateDefaultDevices()));
+
+            // Load and migrate existing devices if necessary, or seed if empty/outdated
+            let devices = [];
+            const devicesData = localStorage.getItem(STORAGE_KEYS.DEVICES);
+            if (devicesData) {
+                try {
+                    devices = JSON.parse(devicesData);
+                } catch (e) {}
             }
+            
+            const hasOldZones = devices.some(d => ['green', 'yellow', 'red', 'open'].includes(d.zone));
+            if (!devicesData || !Array.isArray(devices) || devices.length === 0 || hasOldZones) {
+                localStorage.setItem(STORAGE_KEYS.DEVICES, JSON.stringify(generateDefaultDevices()));
+                // Reset bookings to mock bookings to keep data consistent with new zones
+                localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(MOCK_BOOKINGS));
+            }
+
             // Clear cache to ensure sync
             this._bookingsCache = null;
             this._devicesCache = null;

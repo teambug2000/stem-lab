@@ -24,23 +24,26 @@ const TIME_SLOTS = [
 ];
 
 const ZONES = {
-    green: { name: 'Green Zone', icon: 'fa-solid fa-screwdriver-wrench', desc: 'Khu Cơ khí (Quản lý thẻ vật lý)', bookable: false },
-    yellow: { name: 'Yellow Zone', icon: 'fa-solid fa-bolt', desc: 'Điện - Điện tử', bookable: true },
-    red: { name: 'Red Zone', icon: 'fa-solid fa-cubes', desc: 'STEM Maker', bookable: true },
-    open: { name: 'Open Lab', icon: 'fa-solid fa-border-all', desc: 'Không gian mở', bookable: true }
+    digital: { name: 'Digital & AI Lab', icon: 'fa-solid fa-microchip', desc: 'Công nghệ số & AI (Cụm 1)', bookable: true },
+    fablab: { name: 'FabLab & Engineering', icon: 'fa-solid fa-screwdriver-wrench', desc: 'Chế tạo (Thẻ vật lý & Giám sát - Cụm 2)', bookable: false },
+    robotics: { name: 'Robotics Arena', icon: 'fa-solid fa-robot', desc: 'Robotics (Cụm 3)', bookable: true },
+    science: { name: 'Science Discovery Lab', icon: 'fa-solid fa-flask', desc: 'Khoa học thực nghiệm (Cụm 4)', bookable: true },
+    classroom: { name: 'Lớp học', icon: 'fa-solid fa-chalkboard-user', desc: 'Không gian lớp học', bookable: true }
 };
 
 const DEVICE_TYPES = [
-    'Kính hiển vi',
-    'Vex IQ',
-    'Vex AIM',
-    'Vex V5',
-    'KC BOT',
     'AI - IoT',
+    'Laptop',
+    'KC BOT',
     'Máy in 3D',
     'Snapmaker Artisan',
-    'Laptop',
-    'Dụng cụ cầm tay'
+    'Dụng cụ cầm tay',
+    'Vex IQ',
+    'Vex V5',
+    'Vex AIM',
+    'Kính hiển vi',
+    'Bộ thí nghiệm Vật lý',
+    'Bộ thí nghiệm Hóa học'
 ];
 
 // State variables
@@ -379,17 +382,17 @@ const UIEngine = {
             Object.keys(ZONES).forEach(zoneKey => {
                 const cell = document.createElement('div');
 
-                // Case 1: Green Zone (Khu cơ khí) is locked for online registration
-                if (zoneKey === 'green') {
-                    cell.className = 'grid-cell green-locked';
-                    // We can display bookings in Green Zone if they were created directly by LA/Teacher
-                    const greenBookings = bookings.filter(b => b.zone === 'green' && b.time_slot === slot && b.status !== 'rejected');
+                // Case 1: FabLab Zone (Khu chế tạo) is locked for online registration
+                if (zoneKey === 'fablab') {
+                    cell.className = 'grid-cell fablab-locked';
+                    // We can display bookings in FabLab Zone if they were created directly by LA/Teacher
+                    const fablabBookings = bookings.filter(b => b.zone === 'fablab' && b.time_slot === slot && b.status !== 'rejected');
                     
-                    if (greenBookings.length > 0) {
+                    if (fablabBookings.length > 0) {
                         cell.className = 'grid-cell';
                         for (let i = 1; i <= 3; i++) {
                             const subSlotDiv = document.createElement('div');
-                            const b = greenBookings.find(bk => bk.slot_number === i);
+                            const b = fablabBookings.find(bk => bk.slot_number === i);
                             
                             if (b) {
                                 subSlotDiv.className = `sub-slot booked status-${b.status}`;
@@ -407,7 +410,7 @@ const UIEngine = {
                             cell.appendChild(subSlotDiv);
                         }
                     } else {
-                        cell.innerHTML = `<i class="fa-solid fa-address-card"></i> <strong>Cơ Khí Vật Lý</strong> <span style="font-size:10px; opacity:0.75; margin-top:2px;">Quản lý bằng thẻ vật lý & cần giáo viên trực tiếp giám sát</span>`;
+                        cell.innerHTML = `<i class="fa-solid fa-address-card"></i> <strong>FabLab & Chế tạo</strong> <span style="font-size:10px; opacity:0.75; margin-top:2px;">Chỉ hỗ trợ đặt thẻ vật lý tại phòng & có Giáo viên giám sát</span>`;
                     }
                     
                     grid.appendChild(cell);
@@ -520,7 +523,22 @@ const UIEngine = {
         // Get live availability statistics
         const stats = StemLabAPI.getAvailableDevicesCount(currentDate, slot);
 
+        // Get all devices from storage to find which types belong to this zone
+        const allDevices = StorageEngine.getDevices();
+        const allowedTypes = new Set();
+        allDevices.forEach(d => {
+            if (d.zone === zone || d.type === 'Laptop') {
+                allowedTypes.add(d.type);
+            }
+        });
+
+        // Filter and render device types
         DEVICE_TYPES.forEach((type, idx) => {
+            // Only show devices belonging to this zone (or Laptop)
+            if (!allowedTypes.has(type)) {
+                return;
+            }
+
             const devInfo = stats[type] || { available: 0, total: 0 };
             
             // Render type row
@@ -537,7 +555,6 @@ const UIEngine = {
                 <input type="number" id="qty-dev-${idx}" class="device-qty-input hidden" min="1" max="${devInfo.available}" value="1" disabled>
             `;
 
-            // Bind check toggle to input visibility
             checklist.appendChild(row);
 
             const cb = document.getElementById(`cb-dev-${idx}`);
@@ -557,6 +574,10 @@ const UIEngine = {
                 });
             }
         });
+
+        if (checklist.innerHTML === '') {
+            checklist.innerHTML = '<p style="font-size:12px; color:var(--text-muted); font-style:italic; padding: 10px 0; text-align: center; width: 100%;">Không cần thiết bị mượn kèm tại phân khu này.</p>';
+        }
     },
 
     toggleUrgentFields() {
@@ -750,8 +771,41 @@ const UIEngine = {
         const bookings = StorageEngine.getBookings().sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
         const pendingCount = bookings.filter(b => b.status === 'pending').length;
 
-        // Grouping: For display, we render them cleanly.
-        // We highlight urgent bookings at the top
+        // Group bookings that have the same team_name, date, time_slot, and status
+        const grouped = [];
+        const groups = {};
+        
+        bookings.forEach(b => {
+            const key = `${b.team_name.toLowerCase().trim()}_${b.date}_${b.time_slot}_${b.status}`;
+            if (!groups[key]) {
+                groups[key] = {
+                    team_name: b.team_name,
+                    representative: b.representative,
+                    date: b.date,
+                    time_slot: b.time_slot,
+                    status: b.status,
+                    role_creator: b.role_creator,
+                    is_urgent: false,
+                    urgent_reason: '',
+                    is_overtime: false,
+                    error_report: null,
+                    bookings: []
+                };
+                grouped.push(groups[key]);
+            }
+            groups[key].bookings.push(b);
+            if (b.is_urgent) {
+                groups[key].is_urgent = true;
+                groups[key].urgent_reason = b.urgent_reason;
+            }
+            if (b.is_overtime) {
+                groups[key].is_overtime = true;
+            }
+            if (b.error_report) {
+                groups[key].error_report = b.error_report;
+            }
+        });
+
         bookingsCol.innerHTML = `
             <div class="panel-header">
                 <h3><i class="fa-solid fa-clipboard-list"></i> Quản Lý Lịch Trình Ca Học</h3>
@@ -759,62 +813,75 @@ const UIEngine = {
             </div>
             
             <div class="la-booking-list">
-                ${bookings.length === 0 ? '<p style="text-align:center; padding:20px; color:var(--text-muted);">Không có dữ liệu đăng ký phòng.</p>' : ''}
+                ${grouped.length === 0 ? '<p style="text-align:center; padding:20px; color:var(--text-muted);">Không có dữ liệu đăng ký phòng.</p>' : ''}
                 
-                ${bookings.map(b => {
+                ${grouped.map(g => {
+                    const idsStr = g.bookings.map(b => b.id).join(',');
                     let statusLabel = '';
                     let actionButtons = '';
                     
-                    if (b.status === 'pending') {
+                    if (g.status === 'pending') {
                         statusLabel = '<span class="cell-status-badge">Đang chờ duyệt</span>';
                         actionButtons = `
-                            <button class="btn btn-success btn-sm" onclick="LA_Action.approve('${b.id}')"><i class="fa-solid fa-check"></i> Duyệt</button>
-                            <button class="btn btn-danger btn-sm" onclick="LA_Action.reject('${b.id}')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
+                            <button class="btn btn-success btn-sm" onclick="LA_Action.approveGroup('${idsStr}')"><i class="fa-solid fa-check"></i> Duyệt</button>
+                            <button class="btn btn-danger btn-sm" onclick="LA_Action.rejectGroup('${idsStr}')"><i class="fa-solid fa-xmark"></i> Từ chối</button>
                         `;
-                    } else if (b.status === 'approved') {
+                    } else if (g.status === 'approved') {
                         statusLabel = '<span class="cell-status-badge">Đã duyệt</span>';
                         actionButtons = `
-                            <button class="btn btn-primary btn-sm" onclick="LA_Action.handover('${b.id}')"><i class="fa-solid fa-key"></i> Bàn giao</button>
+                            <button class="btn btn-primary btn-sm" onclick="LA_Action.handoverGroup('${idsStr}')"><i class="fa-solid fa-key"></i> Bàn giao</button>
                         `;
-                    } else if (b.status === 'in_use') {
+                    } else if (g.status === 'in_use') {
                         statusLabel = '<span class="cell-status-badge">Đang sử dụng</span>';
                         actionButtons = `
-                            <button class="btn btn-secondary btn-sm" onclick="LA_Action.complete('${b.id}')"><i class="fa-solid fa-circle-check"></i> Hoàn thành ca</button>
-                            <button class="btn btn-warning btn-sm" onclick="LA_Action.triggerIssue('${b.id}')"><i class="fa-solid fa-triangle-exclamation"></i> Sự cố / Gia hạn</button>
+                            <button class="btn btn-secondary btn-sm" onclick="LA_Action.completeGroup('${idsStr}')"><i class="fa-solid fa-circle-check"></i> Hoàn thành ca</button>
+                            <button class="btn btn-warning btn-sm" onclick="LA_Action.triggerIssueGroup('${idsStr}')"><i class="fa-solid fa-triangle-exclamation"></i> Sự cố / Gia hạn</button>
                         `;
-                    } else if (b.status === 'completed') {
+                    } else if (g.status === 'completed') {
                         statusLabel = `<span class="cell-status-badge">Đã hoàn thành</span>`;
-                    } else if (b.status === 'rejected') {
+                    } else if (g.status === 'rejected') {
                         statusLabel = '<span class="cell-status-badge">Từ chối</span>';
                     }
 
-                    // Display details
-                    let urgentBadge = b.is_urgent ? `<span class="badge-urgent"><i class="fa-solid fa-fire"></i> GẤP: ${escapeHTML(b.urgent_reason)}</span>` : '';
-                    let overtimeBadge = b.is_overtime ? `<span class="badge-overtime"><i class="fa-solid fa-hourglass-half"></i> ĐANG GIA HẠN (OVERTIME)</span>` : '';
-                    let errorBadge = b.error_report ? `<span class="badge-error"><i class="fa-solid fa-triangle-exclamation"></i> LỖI: ${escapeHTML(b.error_report.description)}</span>` : '';
-                    
-                    let roleBadge = b.role_creator === 'teacher' ? '<span class="info-badge" style="color:var(--zone-blue); border-color:var(--zone-blue);">Giáo Viên</span>' : '';
+                    // Consolidated list of zones & slots
+                    const zoneDetailsStr = g.bookings.map(b => `${ZONES[b.zone] ? ZONES[b.zone].name : b.zone} (Slot ${b.slot_number})`).join(', ');
+
+                    // Consolidated devices
+                    const allDevicesInGroup = [];
+                    g.bookings.forEach(b => {
+                        b.devices.forEach(d => {
+                            if (!allDevicesInGroup.includes(d)) {
+                                allDevicesInGroup.push(d);
+                            }
+                        });
+                    });
+
+                    // Badges
+                    let urgentBadge = g.is_urgent ? `<span class="badge-urgent"><i class="fa-solid fa-fire"></i> GẤP: ${escapeHTML(g.urgent_reason)}</span>` : '';
+                    let overtimeBadge = g.is_overtime ? `<span class="badge-overtime"><i class="fa-solid fa-hourglass-half"></i> ĐANG GIA HẠN (OVERTIME)</span>` : '';
+                    let errorBadge = g.error_report ? `<span class="badge-error"><i class="fa-solid fa-triangle-exclamation"></i> LỖI: ${escapeHTML(g.error_report.description)}</span>` : '';
+                    let roleBadge = g.role_creator === 'teacher' ? '<span class="info-badge" style="color:var(--zone-blue); border-color:var(--zone-blue); padding: 2px 6px; font-size: 10px;">Giáo Viên</span>' : '';
 
                     return `
-                        <div class="la-booking-item ${b.is_urgent ? 'urgent-item' : ''}">
+                        <div class="la-booking-item ${g.is_urgent ? 'urgent-item' : ''}">
                             <div class="la-booking-details">
                                 <div class="la-booking-title">
-                                    ${escapeHTML(b.team_name)} ${roleBadge}
+                                    ${escapeHTML(g.team_name)} ${roleBadge}
                                     <span style="font-weight:400; font-size:12px; color:var(--text-muted);">
-                                        (${ZONES[b.zone].name} - Slot ${b.slot_number})
+                                        (${zoneDetailsStr})
                                     </span>
                                 </div>
                                 <div class="la-booking-meta">
-                                    <span><i class="fa-regular fa-user"></i> <strong>Người nhận:</strong> ${escapeHTML(b.representative)}</span>
-                                    <span><i class="fa-regular fa-calendar"></i> <strong>Ngày:</strong> ${escapeHTML(b.date)}</span>
-                                    <span><i class="fa-regular fa-clock"></i> <strong>Ca:</strong> ${escapeHTML(b.time_slot)}</span>
+                                    <span><i class="fa-regular fa-user"></i> <strong>Người nhận:</strong> ${escapeHTML(g.representative)}</span>
+                                    <span><i class="fa-regular fa-calendar"></i> <strong>Ngày:</strong> ${escapeHTML(g.date)}</span>
+                                    <span><i class="fa-regular fa-clock"></i> <strong>Ca:</strong> ${escapeHTML(g.time_slot)}</span>
                                 </div>
                                 <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
-                                    <strong>Mục đích:</strong> ${escapeHTML(b.purpose)}
+                                    <strong>Mục đích:</strong> ${escapeHTML(g.bookings[0].purpose)}
                                 </div>
-                                ${b.devices.length > 0 ? `
+                                ${allDevicesInGroup.length > 0 ? `
                                     <div style="font-size:12px; color:var(--zone-yellow); margin-top:4px; font-weight:500;">
-                                        <i class="fa-solid fa-microchip"></i> <strong>Thiết bị bàn giao:</strong> ${escapeHTML(b.devices.join(', '))}
+                                        <i class="fa-solid fa-microchip"></i> <strong>Thiết bị bàn giao:</strong> ${escapeHTML(allDevicesInGroup.join(', '))}
                                     </div>
                                 ` : ''}
                                 <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
@@ -1141,9 +1208,11 @@ const UIEngine = {
                 datasets: [{
                     data: distributionData.data,
                     backgroundColor: [
-                        '#f59e0b', // yellow
-                        '#ef4444', // red
-                        '#3b82f6'  // open lab
+                        '#10b981', // digital
+                        '#3b82f6', // fablab
+                        '#ef4444', // robotics
+                        '#f59e0b', // science
+                        '#a855f7'  // classroom
                     ],
                     borderWidth: 0
                 }]
@@ -1214,8 +1283,8 @@ const UIEngine = {
                 // Xóa URL query parameter để F5 không tự động mở lại
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
-        } else if (zoneParam === 'green') {
-            alert('Khu vực Green Zone không hỗ trợ đăng ký trực tuyến bằng QR Code!');
+        } else if (zoneParam === 'fablab') {
+            alert('Khu vực FabLab & Chế tạo không hỗ trợ đăng ký trực tuyến bằng QR Code!');
             window.history.replaceState({}, document.title, window.location.pathname);
         } else if (zoneParam) {
             alert(`Mã QR khu vực "${zoneParam}" không hợp lệ!`);
@@ -1226,33 +1295,54 @@ const UIEngine = {
 
 // Global actions namespace for onclick events in dynamically generated HTML
 window.LA_Action = {
-    approve(id) {
-        if (confirm('Duyệt yêu cầu đăng ký này?')) {
-            const res = StemLabAPI.updateBookingStatus(id, 'approved');
-            if (res.success) UIEngine.renderAll();
+    approveGroup(idsStr) {
+        if (confirm('Duyệt toàn bộ các yêu cầu đăng ký trong nhóm này?')) {
+            const ids = idsStr.split(',');
+            let success = false;
+            ids.forEach(id => {
+                const res = StemLabAPI.updateBookingStatus(id, 'approved');
+                if (res.success) success = true;
+            });
+            if (success) UIEngine.renderAll();
         }
     },
-    reject(id) {
-        if (confirm('Từ chối yêu cầu đăng ký này?')) {
-            const res = StemLabAPI.updateBookingStatus(id, 'rejected');
-            if (res.success) UIEngine.renderAll();
+    rejectGroup(idsStr) {
+        if (confirm('Từ chối toàn bộ các yêu cầu đăng ký trong nhóm này?')) {
+            const ids = idsStr.split(',');
+            let success = false;
+            ids.forEach(id => {
+                const res = StemLabAPI.updateBookingStatus(id, 'rejected');
+                if (res.success) success = true;
+            });
+            if (success) UIEngine.renderAll();
         }
     },
-    handover(id) {
-        if (confirm('Xác nhận bàn giao phòng và các thiết bị mượn kèm?')) {
-            const res = StemLabAPI.updateBookingStatus(id, 'in_use');
-            if (res.success) UIEngine.renderAll();
+    handoverGroup(idsStr) {
+        if (confirm('Xác nhận bàn giao phòng và toàn bộ thiết bị mượn kèm cho nhóm này?')) {
+            const ids = idsStr.split(',');
+            let success = false;
+            ids.forEach(id => {
+                const res = StemLabAPI.updateBookingStatus(id, 'in_use');
+                if (res.success) success = true;
+            });
+            if (success) UIEngine.renderAll();
         }
     },
-    complete(id) {
-        if (confirm('Xác nhận hoàn thành ca thực hành và thu hồi phòng/thiết bị?')) {
-            const res = StemLabAPI.updateBookingStatus(id, 'completed');
-            if (res.success) UIEngine.renderAll();
+    completeGroup(idsStr) {
+        if (confirm('Xác nhận hoàn thành ca thực hành và thu hồi phòng/toàn bộ thiết bị của nhóm?')) {
+            const ids = idsStr.split(',');
+            let success = false;
+            ids.forEach(id => {
+                const res = StemLabAPI.updateBookingStatus(id, 'completed');
+                if (res.success) success = true;
+            });
+            if (success) UIEngine.renderAll();
         }
     },
-    triggerIssue(id) {
+    triggerIssueGroup(idsStr) {
+        const firstId = idsStr.split(',')[0];
         const bookings = StorageEngine.getBookings();
-        const b = bookings.find(bk => bk.id === id);
+        const b = bookings.find(bk => bk.id === firstId);
         if (b) {
             UIEngine.showIssueModal(b);
         }

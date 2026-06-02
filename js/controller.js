@@ -91,11 +91,11 @@ const StemLabAPI = {
             return { valid: false, message: 'Không thể tác động hoặc đăng ký lịch trong quá khứ!' };
         }
 
-        // --- RULE 2: Green Zone Student Block (Khóa khu cơ khí) ---
-        if (newBooking.zone === 'green' && newBooking.role_creator === 'student') {
+        // --- RULE 2: FabLab Zone Student Block (Khóa khu chế tạo) ---
+        if (newBooking.zone === 'fablab' && newBooking.role_creator === 'student') {
             return { 
                 valid: false, 
-                message: 'Khu vực Cơ khí không hỗ trợ đăng ký trực tuyến cho học sinh (cần dùng thẻ vật lý và có giáo viên giám sát)!' 
+                message: 'Khu vực FabLab & Chế tạo không hỗ trợ đăng ký trực tuyến cho học sinh (cần dùng thẻ vật lý và có giáo viên giám sát trực tiếp)!' 
             };
         }
 
@@ -424,7 +424,7 @@ const StemLabAPI = {
 
     getZoneDistributionData() {
         const bookings = StorageEngine.getBookings().filter(b => b.status !== 'rejected');
-        const zones = { yellow: 0, red: 0, open: 0 };
+        const zones = { digital: 0, fablab: 0, robotics: 0, science: 0, classroom: 0 };
         
         bookings.forEach(b => {
             if (zones[b.zone] !== undefined) {
@@ -433,8 +433,8 @@ const StemLabAPI = {
         });
 
         return {
-            labels: ['Yellow (Điện)', 'Red (Maker)', 'Open Lab'],
-            data: [zones.yellow, zones.red, zones.open]
+            labels: ['Digital & AI', 'FabLab & Eng', 'Robotics Arena', 'Science Discovery', 'Lớp học'],
+            data: [zones.digital, zones.fablab, zones.robotics, zones.science, zones.classroom]
         };
     },
 
