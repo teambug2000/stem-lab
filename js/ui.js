@@ -523,22 +523,8 @@ const UIEngine = {
         // Get live availability statistics
         const stats = StemLabAPI.getAvailableDevicesCount(currentDate, slot);
 
-        // Get all devices from storage to find which types belong to this zone
-        const allDevices = StorageEngine.getDevices();
-        const allowedTypes = new Set();
-        allDevices.forEach(d => {
-            if (d.zone === zone || d.type === 'Laptop') {
-                allowedTypes.add(d.type);
-            }
-        });
-
         // Filter and render device types
         DEVICE_TYPES.forEach((type, idx) => {
-            // Only show devices belonging to this zone (or Laptop)
-            if (!allowedTypes.has(type)) {
-                return;
-            }
-
             const devInfo = stats[type] || { available: 0, total: 0 };
             
             // Render type row
