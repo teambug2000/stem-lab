@@ -1464,6 +1464,68 @@ const UIEngine = {
         } else if (zoneParam) {
             alert(`Mã QR khu vực "${zoneParam}" không hợp lệ!`);
             window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    },
+    
+    checkTeamReputationWarning(teamName) {
+        const warningBox = document.getElementById('reputation-warning-box');
+        const submitBtn = document.querySelector('#booking-form button[type="submit"]');
+        
+        if (!teamName || teamName.trim() === '') {
+            if (warningBox) warningBox.classList.add('hidden');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+            return;
+        }
+
+        const score = StorageEngine.getTeamReputation(teamName);
+        if (!warningBox) return;
+
+        if (score === 0) {
+            const allBookings = StorageEngine.getBookings();
+            const lastFailedBooking = allBookings
+                .filter(b => b.team_name.trim().toLowerCase() === teamName.trim().toLowerCase() && 
+                             b.teacher_evaluation && 
+                             (b.teacher_evaluation.status === 'chưa đạt' || b.teacher_evaluation.status === 'failed'))
+                .sort((a, b) => new Date(b.teacher_evaluation.evaluated_at) - new Date(a.teacher_evaluation.evaluated_at))[0];
+
+            let failReason = "Không có lý do cụ thể";
+            if (lastFailedBooking && lastFailedBooking.teacher_evaluation.notes) {
+                failReason = lastFailedBooking.teacher_evaluation.notes;
+            }
+
+            warningBox.className = 'reputation-warning-container reputation-warning-danger';
+            warningBox.innerHTML = `<i class="fa-solid fa-ban"></i> <strong>Nhóm đang bị KHÓA đặt lịch!</strong> Điểm uy tín của nhóm đã về 0.<br>Lý do vi phạm gần nhất: <i>"${failReason}"</i>`;
+            warningBox.classList.remove('hidden');
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.4';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+        } else if (score < 40) {
+            warningBox.className = 'reputation-warning-container reputation-warning-warning';
+            warningBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Cảnh báo vùng nguy hiểm!</strong> Điểm uy tín của nhóm hiện tại là <strong>${score}/100</strong>. Nếu bị đánh giá "Chưa đạt" ở ca này, nhóm sẽ bị khóa đặt lịch!`;
+            warningBox.classList.remove('hidden');
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+        } else {
+            warningBox.className = 'reputation-warning-container reputation-warning-success';
+            warningBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> Điểm uy tín nhóm: <strong>${score}/100</strong> (Trạng thái hoạt động tốt).`;
+            warningBox.classList.remove('hidden');
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
         }
     }
 };
@@ -1526,68 +1588,6 @@ window.LA_Action = {
         if (confirm('Bạn có chắc muốn thiết lập lại toàn bộ dữ liệu hệ thống về trạng thái ban đầu?')) {
             StorageEngine.reset();
             UIEngine.renderAll();
-        }
-    },
-    
-    checkTeamReputationWarning(teamName) {
-        const warningBox = document.getElementById('reputation-warning-box');
-        const submitBtn = document.querySelector('#booking-form button[type="submit"]');
-        
-        if (!teamName || teamName.trim() === '') {
-            if (warningBox) warningBox.classList.add('hidden');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.style.cursor = 'pointer';
-            }
-            return;
-        }
-
-        const score = StorageEngine.getTeamReputation(teamName);
-        if (!warningBox) return;
-
-        if (score === 0) {
-            const allBookings = StorageEngine.getBookings();
-            const lastFailedBooking = allBookings
-                .filter(b => b.team_name.trim().toLowerCase() === teamName.trim().toLowerCase() && 
-                             b.teacher_evaluation && 
-                             (b.teacher_evaluation.status === 'chưa đạt' || b.teacher_evaluation.status === 'failed'))
-                .sort((a, b) => new Date(b.teacher_evaluation.evaluated_at) - new Date(a.teacher_evaluation.evaluated_at))[0];
-
-            let failReason = "Không có lý do cụ thể";
-            if (lastFailedBooking && lastFailedBooking.teacher_evaluation.notes) {
-                failReason = lastFailedBooking.teacher_evaluation.notes;
-            }
-
-            warningBox.className = 'reputation-warning-container reputation-warning-danger';
-            warningBox.innerHTML = `<i class="fa-solid fa-ban"></i> <strong>Nhóm đang bị KHÓA đặt lịch!</strong> Điểm uy tín của nhóm đã về 0.<br>Lý do vi phạm gần nhất: <i>"${failReason}"</i>`;
-            warningBox.classList.remove('hidden');
-            
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.4';
-                submitBtn.style.cursor = 'not-allowed';
-            }
-        } else if (score < 40) {
-            warningBox.className = 'reputation-warning-container reputation-warning-warning';
-            warningBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Cảnh báo vùng nguy hiểm!</strong> Điểm uy tín của nhóm hiện tại là <strong>${score}/100</strong>. Nếu bị đánh giá "Chưa đạt" ở ca này, nhóm sẽ bị khóa đặt lịch!`;
-            warningBox.classList.remove('hidden');
-            
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.style.cursor = 'pointer';
-            }
-        } else {
-            warningBox.className = 'reputation-warning-container reputation-warning-success';
-            warningBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> Điểm uy tín nhóm: <strong>${score}/100</strong> (Trạng thái hoạt động tốt).`;
-            warningBox.classList.remove('hidden');
-            
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.style.opacity = '1';
-                submitBtn.style.cursor = 'pointer';
-            }
         }
     }
 };
