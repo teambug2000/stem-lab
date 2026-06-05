@@ -755,12 +755,13 @@ const UIEngine = {
             urgentCheckbox.checked = false;
             urgentGroup.classList.add('hidden');
         } else {
-            urgentCheckbox.disabled = false;
             if (timeDiffHours < 24) {
-                // Sát giờ, force check or show reason input
+                // Sát giờ, bắt buộc phải đăng ký gấp và giải trình lý do
                 urgentCheckbox.checked = true;
+                urgentCheckbox.disabled = true; // Khóa checkbox để người dùng hiểu là bắt buộc chọn
                 urgentGroup.classList.remove('hidden');
             } else {
+                urgentCheckbox.disabled = false;
                 if (urgentCheckbox.checked) {
                     urgentGroup.classList.remove('hidden');
                 } else {

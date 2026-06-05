@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
         window.onerror = function(message, source, lineno, colno, error) {
+            // Bỏ qua các lỗi do trình duyệt/in-app webview tự động inject script (như zaloJSV2)
+            if (message && (message.indexOf('zaloJSV2') !== -1 || message.indexOf('zalo') !== -1)) {
+                return true;
+            }
             const errDiv = document.createElement('div');
             errDiv.style.position = 'fixed';
             errDiv.style.top = '0';
